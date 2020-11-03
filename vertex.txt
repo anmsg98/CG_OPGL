@@ -1,0 +1,24 @@
+#version 330
+
+uniform mat4 worldMat;
+uniform mat4 viewMat;
+uniform mat4 projMat;
+
+layout (location=0) in vec3 position;
+layout (location=1) in vec3 normal;
+layout (location=2) in vec2 texCoord;
+layout (location=3) in vec3 color;
+
+out vec3 v_normal;
+out vec2 v_texCoord;
+out vec3 v_color; 
+out vec3 fragPos;
+
+void main(void)
+{
+	gl_Position = projMat*viewMat*worldMat*vec4(position, 1.0);
+	v_normal = vec3(worldMat*vec4(normal,1.0));
+	v_texCoord = texCoord;
+	v_color = color;
+	fragPos = vec3(worldMat*vec4(position, 1.0));
+}

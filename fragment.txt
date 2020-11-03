@@ -1,0 +1,35 @@
+#version 330
+
+in vec3 v_normal;
+in vec2 v_texCoord;
+in vec3 v_color;
+in vec3 fragPos;
+
+out vec4 gl_FragColor;
+
+uniform vec3 lightColor;
+uniform vec3 lightPos;
+uniform vec3 viewPos;
+uniform float ambientLight;
+uniform int shine;
+uniform vec3 spec;
+
+void main(void)
+{	
+	vec3 ambient = clamp(ambientLight*lightColor,0.0,1.0);
+
+	vec3 normalVector = normalize(v_normal);
+	vec3 lightDir = normalize(lightPos-fragPos);
+	float diffuseLight = max(dot(normalVector,lightDir),0.0); 
+	vec3 diffuse = clamp(diffuseLight * lightColor,0.0,1.0);
+
+	vec3 viewDir = normalize(viewPos-fragPos);
+	vec3 reflectDir = reflect(-lightDir,normalVector);
+	float specularLight = max(dot(viewDir,reflectDir),0.0);
+	specularLight = pow(specularLight,shine);
+	vec3 specular = clamp(specularLight*lightColor,0.0,1.0);
+
+	vec3 result = (ambient+diffuse)*v_color+specular*spec;
+	
+	gl_FragColor = vec4(result,1.0);
+}
