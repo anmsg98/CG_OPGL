@@ -229,8 +229,9 @@ GLchar* ReadSource(const GLchar file[]) {
 	GLchar* s;
 	if (in.is_open()) {
 		in.seekg(0, std::ios::end);
+		
 		int size = in.tellg();
-		s = new GLchar[size + 1];
+		s = new GLchar[size+1]{ '\0' };
 		in.seekg(0, std::ios::beg);
 		in.read(&s[0], size);
 	}
