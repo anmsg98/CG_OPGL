@@ -13,7 +13,7 @@ uniform vec3 viewPos;
 uniform float ambientLight;
 uniform int shine;
 uniform vec3 spec;
-uniform sampler2D texture;
+uniform sampler2D texture1;
 uniform int use_tex;
 void main(void)
 {	
@@ -33,6 +33,6 @@ void main(void)
 
 	vec4 result = vec4(((ambient+diffuse)*v_color+specular*spec), v_color.a );
 	
-	if(use_tex==1){result = texture(texture, v_texCoord) * result;}
+	if(use_tex==1){result = texture(texture1, v_texCoord) * result;}
 	gl_FragColor = result;
 }

@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
 	shineLoc = glGetUniformLocation(shaderID, "shine");
 	ambientLoc = glGetUniformLocation(shaderID, "ambientLight");
 	specLoc = glGetUniformLocation(shaderID, "spec");
-	texLoc = glGetUniformLocation(shaderID, "texture");
+	texLoc = glGetUniformLocation(shaderID, "texture"); 
 	use_texLoc = glGetUniformLocation(shaderID, "use_tex");
 	/*  */
 	MakeShape();
@@ -392,7 +392,7 @@ bool InitBuffer(Obj& obj)
 	}
 	glEnableVertexAttribArray(nomalAttribute);
 	glVertexAttribPointer(nomalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, nor));
-
+	
 	//--- texture coordinates
 	GLint texCoordAttribute = glGetAttribLocation(shaderID, "texCoord");
 	if (texCoordAttribute == -1) {
@@ -401,7 +401,7 @@ bool InitBuffer(Obj& obj)
 	}
 	glEnableVertexAttribArray(texCoordAttribute);
 	glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, tex));
-
+	
 	glBindVertexArray(0);
 	glDeleteBuffers(1, &abo);
 	glDeleteBuffers(1, &ebo);
@@ -411,7 +411,7 @@ bool InitBuffer(Obj& obj)
 void set_flip_texture(bool set) {
 	stbi_set_flip_vertically_on_load(set);
 }
-bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int numOfChannel)
+bool LoadTexture(Obj& obj,const char file[],GLsizei width, GLsizei height,int numOfChannel)
 {
 	//width,height = 2^n
 	obj.Set_Color(glm::vec4(1.0f));
@@ -425,11 +425,11 @@ bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//GL_NEAREST // GL_LINEAR
-	unsigned char* data = stbi_load(F, &width, &height, &numOfChannel, 0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
+	unsigned char* data = stbi_load(F,&width,&height,&numOfChannel,0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
 	if (data == nullptr) {
 		std::cerr << "texture image error : " << file;
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0 , GL_RGB, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
 	obj.texture = texture;
 	stbi_image_free(data);
 	obj.use_texture = true;
@@ -437,7 +437,7 @@ bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int
 }
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) {
 	std::string OBJ{ "obj/" };
-	std::ifstream in(OBJ + objFile, std::ios::in);
+	std::ifstream in(OBJ+objFile, std::ios::in);
 	if (!in.is_open()) {
 		std::cerr << "ERROR: Objfile read 실패\n" << objFile << '\n';
 		return false;
