@@ -9,3 +9,12 @@
 
 비행기 오브제 구했는데 사각 삼각 섞여있어서 좀 그럼.. 삼ㄱ가으로 그리고
 빈공간은 스텔스라고 우기면 먹힐듯 ㅋㅋ 키 눌러서 기본 도형과 변환하는 방식으로 해볼까?
+
+
+이미지 훔쳐오는 링크 https://thefiveplanets.org/b01/data/graphics/
+이미지 변환 링크 http://convert-my-image.com/ImageConverter
+
+LoadTexture() 함수의 마지막 인자 (channel) 은 이미지 파일 마다 다르다!
+윈도우 탐색기에서 파일에 우클릭 ->속성 ->디테일(자세히) ->Bit depth 를 확인!
+Bit depth 는 항상 8의 배수. 나누기 8 한 값을 채널인자로 넣어주면 됩니다. (1-4 까지 가능 그 밖의 이미지가 있으면 알려주세요)
+
