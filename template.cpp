@@ -13,7 +13,9 @@
 #include<gl/glm/glm/gtc/matrix_transform.hpp>
 #include"stb_image.h"
 /*
-	tmp : wasd space arrows wheel
+	tmp : space arrow
+	23 25 : ` x y s
+	24 : tab
 */
 constexpr glm::mat4 df(1.0f);
 /* uniform */
@@ -46,8 +48,8 @@ struct ObjData {
 	GLint shine{ 16 };
 	std::vector<Vertex> vertices;
 	std::vector<Index> verIndices;
-
-	~ObjData() { glDeleteVertexArrays(1, &this->VAO); }
+	bool is_it_temp{ false };
+	~ObjData() { if (!this->is_it_temp) { std::cout << "VAO-del\n"; glDeleteVertexArrays(1, &this->VAO); } }
 };
 struct Obj {
 	ObjData objData;
@@ -67,9 +69,14 @@ struct Obj {
 	}
 	void Set_Alpha(const GLfloat alpha);
 	void Set_Color(const glm::vec4& color);
+	void Reverse_nor() {
+		for (std::vector<Vertex>::iterator i{ this->objData.vertices.begin() }, e{ this->objData.vertices.end() }; i != e; i++) {
+			i->nor = -i->nor;
+		}
+	}
 };
 struct CAMERA {
-	glm::vec3 EYE{ 0.0f,0.0f,150.0f };
+	glm::vec3 EYE{ 0.0f,0.0f,400.0f };
 	glm::vec3 AT{ 0.0f,0.0f,0.0f };
 	glm::vec3 UP{ 0.0f,1.0f,0.0f };
 	glm::vec3 Dir() { return glm::normalize(this->EYE - this->AT); }
@@ -77,6 +84,11 @@ struct CAMERA {
 	glm::vec3 Up() { return glm::normalize(glm::cross(this->Dir(), this->Right())); }
 	glm::mat4 view_M() {
 		return glm::lookAt(this->EYE, this->AT, this->UP);
+	}
+	void set_default() {
+		this->EYE = { 0.0f,50.0f,400.0f };
+		this->AT = { 0.0f,0.0f,0.0f };
+		this->UP = { 0.0f,1.0f,0.0f };
 	}
 }camera;
 struct SCREEN {
@@ -91,9 +103,9 @@ struct SCREEN {
 }screen;
 struct LIGHT {
 	Obj obj;
-	GLfloat ambient{ 0.5f };
+	GLfloat ambient{ 0.7f };
 	glm::vec3 spec{ 0.0f,0.0f,0.0f };
-	glm::vec3 pos;
+	glm::vec3 pos{ 50.0,50.0,50.0 };
 	glm::vec3 col{ 1.0,1.0,1.0 };
 }light;
 /*Funcs*/
@@ -104,7 +116,7 @@ GLuint make_shaderProgram(GLuint vertexShader, GLuint fragmentShader);
 GLuint InitShader(GLvoid);
 bool InitBuffer(Obj& obj);
 void set_flip_texture(bool set);
-bool LoadTexture(Obj& obj, const char* file, GLsizei width, GLsizei height, int numOfChannel = 3);
+bool LoadTexture(Obj& obj, const char* file, GLsizei width, GLsizei height, int numOfChannel);
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[] = "8");	//	f = "8/"
 GLvoid drawObj(Obj& o);
 GLvoid drawScene(GLvoid);
@@ -118,6 +130,7 @@ GLvoid Motion(int x, int y);
 GLvoid MouseWheel(int button, int dir, int x, int y);
 GLvoid Timer(int value);
 GLvoid MakeShape();
+GLvoid DefaultObj();
 /*struct funcs*/
 void Obj::Set_Alpha(const GLfloat alpha) {
 	for (std::vector<Vertex>::iterator i{ this->objData.vertices.begin() }, e{ this->objData.vertices.end() }; i != e; i++) {
@@ -134,8 +147,9 @@ void Obj::Set_Color(const glm::vec4& color) {
 
 
 /*user data*/
-Obj coordinate, plane, cow, sphere, cube, piramid[4];
-
+Obj coordinate, cube[6], piramid[5], world, ground, building[8];
+std::vector<Obj> snow;
+bool c_p{ true }, tab{ false };
 
 /*-----MAIN--*/
 int main(int argc, char** argv) {
@@ -184,11 +198,42 @@ int main(int argc, char** argv) {
 	texLoc = glGetUniformLocation(shaderID, "texture");
 	use_texLoc = glGetUniformLocation(shaderID, "use_tex");
 	/*  */
+	set_flip_texture(true);
+	DefaultObj();
 	MakeShape();
+
+	/* states */
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	/* Funcs */
+	glutDisplayFunc(drawScene);
+	glutReshapeFunc(Reshape);
+	glutSpecialFunc(SpecialInput);
+	glutSpecialUpFunc(SpecialInput_up);
+	glutKeyboardFunc(Keyboard);
+	glutKeyboardUpFunc(keyboard_up);
+	glutMouseFunc(Mouse);
+	glutMotionFunc(Motion);
+	glutMouseWheelFunc(MouseWheel);
+
+	glutTimerFunc(50, Timer, 0);
+
+	glutMainLoop();
+}
+GLvoid DefaultObj() {
+	/*world*/
+	LoadObj("sphere.obj", world, "8/8/8");
+	LoadTexture(world, "skydome.jpg", 2048, 1024, 3);
+	world.M.push_back(glm::scale(df, screen.size_of_world));
+	world.Reverse_nor();
 
 	/*light*/
 	LoadObj("sphere.obj", light.obj, "8/8/8");
-	light.pos = { 0.0,50.0,0.0 };
+	light.obj.Set_Color({ 1.0, 0.5, 0.5, 1.0 });
 	light.obj.M.push_back(glm::translate(df, light.pos));
 	light.obj.M.push_back(glm::scale(df, { 0.8f,0.8f,0.8f }));
 	/*coord*/
@@ -220,47 +265,143 @@ int main(int argc, char** argv) {
 		coordinate.shape = GL_LINES;
 		InitBuffer(coordinate);
 	}
-	/* states */
-	glFrontFace(GL_CCW);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	/* Funcs */
-	glutDisplayFunc(drawScene);
-	glutReshapeFunc(Reshape);
-	glutSpecialFunc(SpecialInput);
-	glutSpecialUpFunc(SpecialInput_up);
-	glutKeyboardFunc(Keyboard);
-	glutKeyboardUpFunc(keyboard_up);
-	glutMouseFunc(Mouse);
-	glutMotionFunc(Motion);
-	glutMouseWheelFunc(MouseWheel);
-
-	glutTimerFunc(50, Timer, 0);
-
-	glutMainLoop();
 }
 GLvoid MakeShape() {
-	/*teddy*/
-	LoadObj("plane.txt", plane, "8/8");
-	plane.M.push_back(glm::translate(df, glm::vec3(20.0, 0.0, 0.0)));//0
-	plane.M.push_back(glm::scale(df, glm::vec3(0.02f)));//1
-	/*cow*/
-	LoadObj("cow.txt", cow);
-	cow.M.push_back(glm::translate(df, glm::vec3(-20.0, 0.0, 0.0)));//0
+	{
+		for (int i = 0; i < 8; i++) {
+			LoadObj("cube.txt", building[i], "8/8/8");
+			building[i].Set_Color({ 1.0f,1.0f,GLfloat(rand() % 10) / 10.0f,0.5f });
+			building[i].M.resize(2, df);
+			building[i].M.at(1) = glm::scale(df, { 6.0f,30.0f,6.0f });
+		}
+	}
+	{
+		LoadObj("cube.txt", ground, "8/8/8");
+		LoadTexture(ground, "grass.jpg", 512, 512, 3);
+		ground.M.push_back(glm::translate(df, { 0.0,-60.0,0.0 }));
+		ground.M.push_back(glm::scale(df, { 100.0,10.0,100.0 }));
+	}
+	{
+		glm::vec3 p[8]{
+			{ 1.0,  1.0,  1.0},
+			{-1.0,  1.0,  1.0},
+			{ 1.0, -1.0,  1.0},
+			{-1.0, -1.0,  1.0},
+			{ 1.0,  1.0, -1.0},
+			{-1.0,  1.0, -1.0},
+			{ 1.0, -1.0, -1.0},
+			{-1.0, -1.0, -1.0}
+		};
+		glm::vec2 t[4]{
+			{ 0.0, 1.0},
+			{ 1.0, 1.0},
+			{ 0.0, 0.0},
+			{ 1.0, 0.0}
+		};
+		glm::vec3 n[6]{
+			{  0.0,  0.0,  1.0},
+			{  1.0,  0.0,  0.0},
+			{  0.0,  1.0,  0.0},
+			{  0.0,  0.0, -1.0},
+			{ -1.0,  0.0,  0.0},
+			{  0.0, -1.0,  0.0}
+		};
+		int pi[6][6]{
+			{0,1,2,3,2,1},
+			{2,6,0,0,6,4},
+			{0,4,5,0,5,1},
+			{4,6,7,7,5,4},
+			{3,1,7,7,1,5},
+			{6,2,7,2,3,7}
+		};
+		int ti[6][6]{
+			{1,0,3,2,3,0},
+			{2,3,0,0,3,1},
+			{3,1,0,3,0,2},
+			{0,2,3,3,1,0},
+			{3,1,2,2,1,0},
+			{0,2,1,2,3,1}
+		};
+		int ni[6]{ 0,1,2,3,4,5 };
+
+		for (int i = 0; i < 6; i++) {
+			for (int j = 0; j < 6; j++) {
+				Vertex v;
+				v.col = { 1.0,1.0,1.0,1.0 };
+				v.pos = p[pi[i][j]];
+				v.tex = t[ti[i][j]];
+				v.nor = n[ni[i]];
+				cube[i].objData.vertices.push_back(v);
+				cube[i].objData.verIndices.push_back(j);
+			}
+			InitBuffer(cube[i]);
+			cube[i].M.push_back(glm::scale(df, glm::vec3(20.0f)));
+			cube[i].M.resize(2,df);
+		}
+		LoadTexture(cube[0], "face1.jpg", 512, 512, 1);
+		LoadTexture(cube[1], "face2.jpg", 512, 512, 1);
+		LoadTexture(cube[2], "face3.jpg", 512, 512, 1);
+		LoadTexture(cube[3], "face4.jpg", 512, 512, 1);
+		LoadTexture(cube[4], "face5.jpg", 512, 512, 1);
+		LoadTexture(cube[5], "face6.jpg", 512, 512, 1);
+	}
 	/**/
-	LoadObj("sphere.txt", sphere, "8/8/8");
-	sphere.M.push_back(glm::translate(df, glm::vec3(0.0, 0.0, 20.0)));//0
-	sphere.M.push_back(glm::scale(df, glm::vec3(2.0f)));
-	sphere.Set_Alpha(0.1f);
-	/**/
-	set_flip_texture(true);
-	LoadObj("cube.txt", cube, "8/8/8");
-	LoadTexture(cube, "face1.jpg", 512, 512, 1);
-	cube.M.push_back(glm::translate(df, glm::vec3(0.0, 0.0, 0.0)));//0
-	cube.M.push_back(glm::scale(df, glm::vec3(4.0f)));
+	{
+		glm::vec3 p[5]{
+				{ 1.0, -1.0,  1.0},
+				{-1.0, -1.0,  1.0},
+				{ 1.0, -1.0, -1.0},
+				{-1.0, -1.0, -1.0},
+				{ 0.0,  1.0,  0.0}
+		};
+		glm::vec2 t[3]{
+			{ 0.0, 0.0},
+			{ 1.0, 0.0},
+			{ 0.5, 1.0}
+		};
+		glm::vec3 n[5]{
+			{  0.0,  0.0,  1.0},
+			{ -1.0,  0.0,  0.0},
+			{  0.0,  0.0, -1.0},
+			{  1.0,  0.0,  0.0},
+			{  0.0,  1.0,  0.0}
+		};
+		int pi[4][3]{
+			{0,4,1},
+			{1,4,3},
+			{3,4,2},
+			{2,4,0}
+		};
+		int ti[4][3]{
+			{1,2,0},
+			{1,2,0},
+			{1,2,0},
+			{1,2,0}
+		};
+		int ni[5]{ 0,1,2,3,4 };
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 3; j++) {
+				Vertex v;
+				v.col = { 1.0,1.0,1.0,1.0 };
+				v.pos = p[pi[i][j]];
+				v.tex = t[ti[i][j]];
+				if (j == 1) v.nor = n[ni[4]];
+				else v.nor = n[ni[i]];
+				piramid[i].objData.vertices.push_back(v);
+				piramid[i].objData.verIndices.push_back(j);
+			}
+			InitBuffer(piramid[i]);
+			piramid[i].M.push_back(glm::scale(df, glm::vec3(20.0f)));
+			piramid[i].M.resize(2,df);
+		}
+		piramid[4] = cube[5];
+		LoadTexture(piramid[0], "face1.jpg", 512, 512, 1);
+		LoadTexture(piramid[1], "face2.jpg", 512, 512, 1);
+		LoadTexture(piramid[2], "face3.jpg", 512, 512, 1);
+		LoadTexture(piramid[3], "face4.jpg", 512, 512, 1);
+		LoadTexture(piramid[4], "face4.jpg", 512, 512, 1);
+		InitBuffer(piramid[4]);
+	}
 };
 
 /*셰이더 함수*/
@@ -415,7 +556,7 @@ void set_flip_texture(bool set) {
 }
 bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int numOfChannel)
 {
-	
+
 	//width,height = 2^n
 	obj.Set_Color(glm::vec4(1.0f)); // --회색조
 	char F[256];
@@ -457,7 +598,7 @@ bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int
 		break;
 	}
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0,numOfChannel, width, height, 0, format, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
+	glTexImage2D(GL_TEXTURE_2D, 0, numOfChannel, width, height, 0, format, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
 	obj.texture = texture;
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(data);
@@ -570,6 +711,30 @@ GLvoid drawObj(Obj& o) {
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+bool FarFromEYE(Obj* a,Obj* b) {
+	glm::vec3 A{ a->world_M() * glm::vec4(a->objData.vertices.at(0).pos,1.0f) };
+	glm::vec3 B{ b->world_M() * glm::vec4(b->objData.vertices.at(0).pos,1.0f) };
+	return glm::distance(B, camera.EYE) < glm::distance(A, camera.EYE);
+}
+GLvoid Sort_Alpha_blending(std::vector<Obj*>& all_obj) {
+	sort(all_obj.begin(), all_obj.end(), FarFromEYE);
+}
+GLvoid Draw_Alpha_blending(std::vector<Obj*>& all_obj) {
+	glm::vec4 c[8]{
+		{1.0f,0.0f,0.0f,0.5f},
+		{0.8f,0.2f,0.0f,0.5f},
+		{0.6f,0.4f,0.0f,0.5f},
+		{0.4f,0.6f,0.0f,0.5f},
+		{0.2f,0.8f,0.0f,0.5f},
+		{0.0f,1.0f,0.0f,0.5f},
+		{0.0f,0.8f,0.2f,0.5f},
+		{0.0f,0.6f,0.4f,0.5f}
+	};
+	for (std::vector<Obj*>::iterator i{ all_obj.begin() }, e{ all_obj.end() }; i != e; i++) {
+		(**i).Set_Color(c[i - all_obj.begin()]);
+		drawObj(**i);
+	}
+}
 GLvoid drawScene() {
 	/*기본 배경*/
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
@@ -583,19 +748,47 @@ GLvoid drawScene() {
 	glUniform1f(ambientLoc, light.ambient);
 	glUniform3f(specLoc, light.spec.r, light.spec.g, light.spec.b);
 	glUniform1i(texLoc, 0);
+	std::vector<Obj*> Alpha_objs;
 	/*그리기 시작*/
 	{
-		/*불투명*/
+
+		glFrontFace(GL_CW);
+		drawObj(world);
 		glFrontFace(GL_CCW);
-		drawObj(cow);
-		drawObj(plane);
-		drawObj(coordinate);
+		/*불투명*/
 		drawObj(light.obj);
-		drawObj(cube);
-		/*투명 먼거부터*/
-		drawObj(sphere);
+		if (tab) {
+			drawObj(ground);
+			for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
+				drawObj(*i);
+			}
+		}
+		else {
+			drawObj(coordinate);
+			if (c_p) {
+				for (int i = 0; i < 6; i++) {
+					drawObj(cube[i]);
+				}
+			}
+			else {
+				for (int i = 0; i < 5; i++) {
+					drawObj(piramid[i]);
+				}
+			}
+		}
+	}
+	/*alpha*/
+	{
+		/*투명 ALpha_objs 로 push 하면 정렬한 후 드로우 함*/
+		if (tab) {
+			for (int i = 0; i < 8; i++) {
+				Alpha_objs.push_back(&building[i]);
+			}
+		}
 	}
 	/*그리기 끝*/
+	Sort_Alpha_blending(Alpha_objs);
+	Draw_Alpha_blending(Alpha_objs);
 	glutSwapBuffers();
 }
 
@@ -604,12 +797,21 @@ GLvoid Reshape(int w, int h) {
 	screen.width = w, screen.height = h;
 	glViewport(0, 0, screen.width, screen.height);
 }
-bool up, down, right, left;
+bool up, down, right, left, bl_x, bl_y, bl_snow;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	switch (value)
 	{
 	case 0: {
+		if (tab) {
+			if (250 <= snow.size())snow.begin()->objData.is_it_temp = false,snow.begin()->~Obj(), snow.erase(snow.begin());
+			for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
+				if ((i->world_M()* glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
+					i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
+				}
+				else i->M.at(0) = glm::translate(i->M.at(0), { 0.0,-1.0,0.0 });
+			}
+		}
 
 		if (up) {
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
@@ -631,7 +833,40 @@ GLvoid Timer(int value) {
 			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
-		glutTimerFunc(50, Timer, 0);
+		glutTimerFunc(50, Timer, value);
+		break;
+	}
+	case 231: {
+		for (int i = 0; i < 6; i++) {
+			cube[i].M.at(1) = glm::rotate(cube[i].M.at(1), glm::radians(degree), { 1.0,0.0,0.0 });
+		}
+		for (int i = 0; i < 5; i++) {
+			piramid[i].M.at(1) = glm::rotate(piramid[i].M.at(1), glm::radians(degree), { 1.0,0.0,0.0 });
+		}
+		if (bl_x)glutTimerFunc(50, Timer, value);
+		break;
+	}
+	case 232: {
+		for (int i = 0; i < 6; i++) {
+			cube[i].M.at(1) = glm::rotate(cube[i].M.at(1), glm::radians(degree), { 0.0,1.0,0.0 });
+		}
+		for (int i = 0; i < 5; i++) {
+			piramid[i].M.at(1) = glm::rotate(piramid[i].M.at(1), glm::radians(degree), { 0.0,1.0,0.0 });
+		}
+		if(bl_y)glutTimerFunc(50, Timer, value);
+		break;
+	}
+	case 241: {
+		Obj o;
+		o.objData.is_it_temp = true;
+		LoadObj("sphere.obj", o, "8/8/8");
+		o.Set_Color({ 1.0f,GLfloat(rand() % 10) / 10.0f,1.0f,1.0f });
+		o.M.push_back(glm::translate(glm::mat4(1.0f), { GLfloat(rand() % 200) - 100.0f,GLfloat(rand() % 20 + 80),GLfloat(rand() % 200) - 100.0f }));
+		o.M.push_back(glm::scale(df, glm::vec3(0.2f)));
+		o.M.resize(3, df);
+		snow.push_back(o);
+
+		if (bl_snow)glutTimerFunc(100, Timer, value);
 		break;
 	}
 	default: { break; }
@@ -741,38 +976,56 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
-	case 'w': {
-		glm::vec3 t{ camera.Up() };
-		camera.EYE = glm::translate(df, t) * glm::vec4(camera.EYE, 1.0f);
-		camera.AT = glm::translate(df, t) * glm::vec4(camera.AT, 1.0f);
-
+	case '~':
+	case '`': {
+		c_p = c_p ? false : true;
 		break;
 	}
+	case 'S':
 	case 's': {
-		glm::vec3 t{ -camera.Up() };
-		camera.EYE += t;
-		camera.AT += t;
-
+		bl_x = false, bl_y = false;
+		for (int i = 0; i < 6; i++) {
+			cube[i].M.at(1) = df;
+		}
+		for (int i = 0; i < 5; i++) {
+			piramid[i].M.at(1) = df;
+		}
+		camera.set_default();
 		break;
 	}
-	case 'a': {
-		glm::vec3 t{ -camera.Right() };
-		camera.EYE += t;
-		camera.AT += t;
-
+	case 'X':
+	case 'x': {
+		bl_x = bl_x ? false : true;
+		glutTimerFunc(50, Timer, 231);
 		break;
 	}
-	case 'd': {
-		glm::vec3 t{ camera.Right() };
-		camera.EYE = glm::translate(df, t) * glm::vec4(camera.EYE, 1.0f);
-		camera.AT = glm::translate(df, t) * glm::vec4(camera.AT, 1.0f);
-
+	case 'Y':
+	case 'y': {
+		bl_y = bl_y ? false : true;
+		glutTimerFunc(50, Timer, 232);
 		break;
 	}
 	case ' ': {
-		if (light.ambient < 1.0f)light.ambient += 0.5f;
+		if (light.ambient < 1.0f)light.ambient += 0.4f;
 		else light.ambient = 0.0f;
 
+		break;
+	}
+	case 'Q':
+	case 'q': {
+		if (!tab)break;
+		bl_snow = bl_snow ? false : true;
+		glutTimerFunc(50, Timer, 241);
+		break;
+	}
+	case '\t': {
+		for (int i = 0; i < 8; i++) {
+			building[i].M.at(0)=glm::translate(df, { GLfloat(rand() % 200) - 100.0f,-40.0f,GLfloat(rand() % 200) - 100.0f });
+		}
+		tab = tab ? false : true;
+		static GLfloat A{ 10.0f };
+		camera.AT.y += A;
+		A *= -1;
 		break;
 	}
 	default: { break; }
