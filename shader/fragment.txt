@@ -31,7 +31,7 @@ void main(void)
 	specularLight = pow(specularLight,shine);
 	vec3 specular = clamp(specularLight*lightColor,0.0,1.0);
 
-	vec4 result = vec4(((ambient+diffuse)*v_color+specular*spec), v_color.a );
+	vec4 result = vec4(((ambient+diffuse)*v_color.rgb+specular*spec), v_color.a );
 	
 	if(use_tex==1){result = texture(texture1, v_texCoord) * result;}
 	gl_FragColor = result;

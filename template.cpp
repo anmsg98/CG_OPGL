@@ -15,9 +15,10 @@
 /*
 	tmp : space arrow
 	23 25 : ` x y s
-	24 : tab
+	24 : tab q
 */
 constexpr glm::mat4 df(1.0f);
+
 /* uniform */
 
 GLuint worldLoc;
@@ -48,8 +49,7 @@ struct ObjData {
 	GLint shine{ 16 };
 	std::vector<Vertex> vertices;
 	std::vector<Index> verIndices;
-	bool is_it_temp{ false };
-	~ObjData() { if (!this->is_it_temp) { std::cout << "VAO-del\n"; glDeleteVertexArrays(1, &this->VAO); } }
+	void DelObjData() { glDeleteVertexArrays(1, &this->VAO); }
 };
 struct Obj {
 	ObjData objData;
@@ -63,10 +63,9 @@ struct Obj {
 		std::for_each(this->M.begin(), this->M.end(), [&WM](glm::mat4& m) { WM *= m; });
 		//M0*M1*M2 TRS
 		return WM;
+
 	}
-	~Obj() {
-		glDeleteTextures(1, &this->texture);
-	}
+	void DelObj() {glDeleteTextures(1, &this->texture);}
 	void Set_Alpha(const GLfloat alpha);
 	void Set_Color(const glm::vec4& color);
 	void Reverse_nor() {
@@ -804,7 +803,7 @@ GLvoid Timer(int value) {
 	{
 	case 0: {
 		if (tab) {
-			if (250 <= snow.size())snow.begin()->objData.is_it_temp = false,snow.begin()->~Obj(), snow.erase(snow.begin());
+			if (250 <= snow.size()) { snow.begin()->objData.DelObjData(); snow.erase(snow.begin()); }
 			for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
 				if ((i->world_M()* glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
 					i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
@@ -858,7 +857,6 @@ GLvoid Timer(int value) {
 	}
 	case 241: {
 		Obj o;
-		o.objData.is_it_temp = true;
 		LoadObj("sphere.obj", o, "8/8/8");
 		o.Set_Color({ 1.0f,GLfloat(rand() % 10) / 10.0f,1.0f,1.0f });
 		o.M.push_back(glm::translate(glm::mat4(1.0f), { GLfloat(rand() % 200) - 100.0f,GLfloat(rand() % 20 + 80),GLfloat(rand() % 200) - 100.0f }));
