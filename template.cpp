@@ -4,6 +4,7 @@
 #include<vector>
 #include<math.h>
 #include<string>
+#include<time.h>
 #include<gl/glew.h>
 #include<algorithm>
 #include<gl/freeglut.h>
@@ -45,7 +46,7 @@ struct Vertex {
 	glm::vec3 nor; // normal
 };
 struct ObjData {
-	GLuint VAO;
+	GLuint VAO{0};
 	GLint shine{ 16 };
 	std::vector<Vertex> vertices;
 	std::vector<Index> verIndices;
@@ -75,7 +76,7 @@ struct Obj {
 	}
 };
 struct CAMERA {
-	glm::vec3 EYE{ 0.0f,0.0f,400.0f };
+	glm::vec3 EYE{ 0.0f,0.0f,1000.0f };
 	glm::vec3 AT{ 0.0f,0.0f,0.0f };
 	glm::vec3 UP{ 0.0f,1.0f,0.0f };
 	glm::vec3 Dir() { return glm::normalize(this->EYE - this->AT); }
@@ -84,18 +85,13 @@ struct CAMERA {
 	glm::mat4 view_M() {
 		return glm::lookAt(this->EYE, this->AT, this->UP);
 	}
-	void set_default() {
-		this->EYE = { 0.0f,50.0f,400.0f };
-		this->AT = { 0.0f,0.0f,0.0f };
-		this->UP = { 0.0f,1.0f,0.0f };
-	}
 }camera;
 struct SCREEN {
-	GLfloat fovy{ 45.0f }; //glm::Radians(fovy)
+	GLfloat fovy{ 30.0f }; //glm::Radians(fovy)
 	GLsizei width{ 800 };	//W/H
 	GLsizei height{ 600 };	//W/H
 	GLfloat n{ 0.1f };
-	GLfloat f{ 2000.0f };
+	GLfloat f{ 200000.0f };
 	glm::vec3 size_of_world{ 100.0f,100.0f,100.0f };//[-a:a]
 	GLfloat aspect() { return width / height; }
 	glm::mat4 proj_M() { return glm::perspective(glm::radians(this->fovy), this->aspect(), this->n, this->f); }
@@ -107,6 +103,9 @@ struct LIGHT {
 	glm::vec3 pos{ 50.0,50.0,50.0 };
 	glm::vec3 col{ 1.0,1.0,1.0 };
 }light;
+
+
+
 /*Funcs*/
 GLchar* ReadSource(const GLchar file[]);
 GLuint make_vertexShaders(const GLchar file[]);
@@ -146,7 +145,112 @@ void Obj::Set_Color(const glm::vec4& color) {
 
 
 /*user data*/
-Obj coordinate, cube[6], piramid[5], world, ground, building[8];
+struct PLANE {
+	Obj obj;
+	Obj coor[3];
+	glm::vec3 pos{ 0.0,0.0,0.0 };
+
+	glm::vec3 head{ 0.0,0.0,-1.0 };
+	glm::vec3 tail{ 0.0,0.0,1.0 };
+	glm::vec3 up{ 0.0,1.0,0.0 };
+
+	GLfloat speed{ 0.0f };
+	GLfloat maxspeed{ 20.0f };
+	void init() {
+		// 0 Trans	1 Yaw	2 Pitch	3 Roll	4 Size
+		this->obj.M.resize(5, df);
+		LoadObj("plane.txt", this->obj, "8/8");
+		this->obj.M.at(4) = glm::scale(df, glm::vec3(0.2));
+		setPos();
+		this->obj.Set_Color({ 0.0,0.0,1.0,1.0 });
+
+		/**/
+		for (int i = 0; i < 3; i++) {
+			coor[i].M.resize(1);
+			LoadObj("sphere.obj", coor[i], "8/8/8");
+		}
+		coor[0].Set_Color({ 1.0,0.0,0.0,1.0 });
+		coor[1].Set_Color({ 1.0,0.0,1.0,1.0 });
+		coor[2].Set_Color({ 0.0,1.0,0.0,1.0 });
+	}
+	glm::vec3 head_() { return this->obj.M.at(0) * glm::vec4(-this->nDir(), 1.0f); }
+	glm::vec3 tail_() { return this->obj.M.at(0) * glm::vec4(this->nDir(), 1.0f); }
+	glm::vec3 up_() { return this->obj.M.at(0) * glm::vec4(this->Up(), 1.0f); }
+
+
+	
+	void update_coor(glm::mat4& m) {
+		head = glm::vec3(m * glm::vec4(head,1.0f));
+		tail = glm::vec3(m * glm::vec4(tail,1.0f));
+		up = glm::vec3(m * glm::vec4(up,1.0f));
+	}
+
+	glm::vec3 nDir() { return glm::normalize(this->tail - this->head); }
+	glm::vec3 Right() { return glm::normalize(glm::cross(this->up, this->nDir())); }
+	glm::vec3 Up() { return glm::normalize(glm::cross(this->nDir(), this->Right())); }
+
+	glm::mat4 yaw_(GLfloat degree) {
+		return glm::rotate(df, glm::radians(degree), Up());
+	}
+	glm::mat4 pitch_(GLfloat degree) {
+		return glm::rotate(df, glm::radians(degree), Right());
+	}
+	glm::mat4 roll_(GLfloat degree) {
+		return glm::rotate(df, glm::radians(degree), nDir());
+	}
+	void Yaw(GLfloat degree) {
+		glm::mat4 m = yaw_(degree);
+		obj.M.at(1) = obj.M.at(1) * m;
+		update_coor(m);
+		printf("y\n");
+	}
+	void Pitch(GLfloat degree) {
+		glm::mat4 m = pitch_(degree);
+		obj.M.at(2) = obj.M.at(2) * m;
+		update_coor(m);
+		printf("p\n");
+	}
+	void Roll(GLfloat degree) {
+		glm::mat4 m = roll_(degree);
+		obj.M.at(3) = obj.M.at(3) * m;
+		update_coor(m);
+		printf("r\n");
+	}
+	
+	void go() {
+		this->pos = glm::translate(df, nDir() * -speed) * glm::vec4{ this->pos,1.0f };
+	}
+
+	void set_speed(GLfloat d) {
+		speed += d;
+		if (speed < 0.0f)speed = 0.0f;
+		if (maxspeed < speed)speed = maxspeed;
+	}
+
+	void setPos() {
+		this->obj.M.at(0) = glm::translate(df, pos);
+	}
+
+	void view() {
+		glm::mat4 m = pitch_(60) * glm::translate(df, nDir() * 100.0f);
+
+		//camera.AT = this->pos;
+		//camera.EYE = m * glm::vec4{ this->pos ,1.0f };
+	}
+
+	void update() {
+		coor[0].M[0] = glm::translate(df, head*50.0f);
+		coor[1].M[0] = glm::translate(df, tail*50.0f);
+		coor[2].M[0] = glm::translate(df, up*50.0f);
+		this->go();
+		this->setPos();
+		this->view();
+		//update_coor();
+	}
+}plane;
+
+
+Obj coordinate, world, ground, building[8];
 std::vector<Obj> snow;
 bool c_p{ true }, tab{ false };
 
@@ -266,6 +370,7 @@ GLvoid DefaultObj() {
 	}
 }
 GLvoid MakeShape() {
+	plane.init();
 	{
 		for (int i = 0; i < 8; i++) {
 			LoadObj("cube.txt", building[i], "8/8/8");
@@ -280,127 +385,7 @@ GLvoid MakeShape() {
 		ground.M.push_back(glm::translate(df, { 0.0,-60.0,0.0 }));
 		ground.M.push_back(glm::scale(df, { 100.0,10.0,100.0 }));
 	}
-	{
-		glm::vec3 p[8]{
-			{ 1.0,  1.0,  1.0},
-			{-1.0,  1.0,  1.0},
-			{ 1.0, -1.0,  1.0},
-			{-1.0, -1.0,  1.0},
-			{ 1.0,  1.0, -1.0},
-			{-1.0,  1.0, -1.0},
-			{ 1.0, -1.0, -1.0},
-			{-1.0, -1.0, -1.0}
-		};
-		glm::vec2 t[4]{
-			{ 0.0, 1.0},
-			{ 1.0, 1.0},
-			{ 0.0, 0.0},
-			{ 1.0, 0.0}
-		};
-		glm::vec3 n[6]{
-			{  0.0,  0.0,  1.0},
-			{  1.0,  0.0,  0.0},
-			{  0.0,  1.0,  0.0},
-			{  0.0,  0.0, -1.0},
-			{ -1.0,  0.0,  0.0},
-			{  0.0, -1.0,  0.0}
-		};
-		int pi[6][6]{
-			{0,1,2,3,2,1},
-			{2,6,0,0,6,4},
-			{0,4,5,0,5,1},
-			{4,6,7,7,5,4},
-			{3,1,7,7,1,5},
-			{6,2,7,2,3,7}
-		};
-		int ti[6][6]{
-			{1,0,3,2,3,0},
-			{2,3,0,0,3,1},
-			{3,1,0,3,0,2},
-			{0,2,3,3,1,0},
-			{3,1,2,2,1,0},
-			{0,2,1,2,3,1}
-		};
-		int ni[6]{ 0,1,2,3,4,5 };
-
-		for (int i = 0; i < 6; i++) {
-			for (int j = 0; j < 6; j++) {
-				Vertex v;
-				v.col = { 1.0,1.0,1.0,1.0 };
-				v.pos = p[pi[i][j]];
-				v.tex = t[ti[i][j]];
-				v.nor = n[ni[i]];
-				cube[i].objData.vertices.push_back(v);
-				cube[i].objData.verIndices.push_back(j);
-			}
-			InitBuffer(cube[i]);
-			cube[i].M.push_back(glm::scale(df, glm::vec3(20.0f)));
-			cube[i].M.resize(2,df);
-		}
-		LoadTexture(cube[0], "face1.jpg", 512, 512, 1);
-		LoadTexture(cube[1], "face2.jpg", 512, 512, 1);
-		LoadTexture(cube[2], "face3.jpg", 512, 512, 1);
-		LoadTexture(cube[3], "face4.jpg", 512, 512, 1);
-		LoadTexture(cube[4], "face5.jpg", 512, 512, 1);
-		LoadTexture(cube[5], "face6.jpg", 512, 512, 1);
-	}
 	/**/
-	{
-		glm::vec3 p[5]{
-				{ 1.0, -1.0,  1.0},
-				{-1.0, -1.0,  1.0},
-				{ 1.0, -1.0, -1.0},
-				{-1.0, -1.0, -1.0},
-				{ 0.0,  1.0,  0.0}
-		};
-		glm::vec2 t[3]{
-			{ 0.0, 0.0},
-			{ 1.0, 0.0},
-			{ 0.5, 1.0}
-		};
-		glm::vec3 n[5]{
-			{  0.0,  0.0,  1.0},
-			{ -1.0,  0.0,  0.0},
-			{  0.0,  0.0, -1.0},
-			{  1.0,  0.0,  0.0},
-			{  0.0,  1.0,  0.0}
-		};
-		int pi[4][3]{
-			{0,4,1},
-			{1,4,3},
-			{3,4,2},
-			{2,4,0}
-		};
-		int ti[4][3]{
-			{1,2,0},
-			{1,2,0},
-			{1,2,0},
-			{1,2,0}
-		};
-		int ni[5]{ 0,1,2,3,4 };
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 3; j++) {
-				Vertex v;
-				v.col = { 1.0,1.0,1.0,1.0 };
-				v.pos = p[pi[i][j]];
-				v.tex = t[ti[i][j]];
-				if (j == 1) v.nor = n[ni[4]];
-				else v.nor = n[ni[i]];
-				piramid[i].objData.vertices.push_back(v);
-				piramid[i].objData.verIndices.push_back(j);
-			}
-			InitBuffer(piramid[i]);
-			piramid[i].M.push_back(glm::scale(df, glm::vec3(20.0f)));
-			piramid[i].M.resize(2,df);
-		}
-		piramid[4] = cube[5];
-		LoadTexture(piramid[0], "face1.jpg", 512, 512, 1);
-		LoadTexture(piramid[1], "face2.jpg", 512, 512, 1);
-		LoadTexture(piramid[2], "face3.jpg", 512, 512, 1);
-		LoadTexture(piramid[3], "face4.jpg", 512, 512, 1);
-		LoadTexture(piramid[4], "face4.jpg", 512, 512, 1);
-		InitBuffer(piramid[4]);
-	}
 };
 
 /*셰이더 함수*/
@@ -494,7 +479,7 @@ GLuint InitShader() {
 }
 bool InitBuffer(Obj& obj)
 {
-	glDeleteVertexArrays(1, &(obj.objData.VAO));
+	if (obj.objData.VAO != 0)glDeleteVertexArrays(1, &(obj.objData.VAO));
 	GLuint abo;	// array buffer obj
 	GLuint ebo;	// elements bo
 	//--- Vertex Array Object 생성
@@ -612,7 +597,7 @@ bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) {
 		return false;
 	}
 
-	char line[256];
+	char line[512]{ '\0' };
 	Vertex V;
 	std::vector<glm::vec3> P(1);
 	std::vector<glm::vec2> T(1);
@@ -622,7 +607,7 @@ bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) {
 	glm::vec2 tv2;
 
 	while (!in.eof()) {
-		in.getline(line, 256);
+		in.getline(line, 512);
 		if (strncmp(line, "v ", 2) == 0) {
 			sscanf_s(&line[2], "%f %f %f", &tv3.x, &tv3.y, &tv3.z);
 			P.push_back(tv3);
@@ -719,18 +704,7 @@ GLvoid Sort_Alpha_blending(std::vector<Obj*>& all_obj) {
 	sort(all_obj.begin(), all_obj.end(), FarFromEYE);
 }
 GLvoid Draw_Alpha_blending(std::vector<Obj*>& all_obj) {
-	glm::vec4 c[8]{
-		{1.0f,0.0f,0.0f,0.5f},
-		{0.8f,0.2f,0.0f,0.5f},
-		{0.6f,0.4f,0.0f,0.5f},
-		{0.4f,0.6f,0.0f,0.5f},
-		{0.2f,0.8f,0.0f,0.5f},
-		{0.0f,1.0f,0.0f,0.5f},
-		{0.0f,0.8f,0.2f,0.5f},
-		{0.0f,0.6f,0.4f,0.5f}
-	};
 	for (std::vector<Obj*>::iterator i{ all_obj.begin() }, e{ all_obj.end() }; i != e; i++) {
-		(**i).Set_Color(c[i - all_obj.begin()]);
 		drawObj(**i);
 	}
 }
@@ -750,10 +724,13 @@ GLvoid drawScene() {
 	std::vector<Obj*> Alpha_objs;
 	/*그리기 시작*/
 	{
-
 		glFrontFace(GL_CW);
 		drawObj(world);
 		glFrontFace(GL_CCW);
+		drawObj(plane.obj);
+		for (int i = 0; i < 3; i++) {
+			drawObj(plane.coor[i]);
+		}
 		/*불투명*/
 		drawObj(light.obj);
 		if (tab) {
@@ -764,16 +741,6 @@ GLvoid drawScene() {
 		}
 		else {
 			drawObj(coordinate);
-			if (c_p) {
-				for (int i = 0; i < 6; i++) {
-					drawObj(cube[i]);
-				}
-			}
-			else {
-				for (int i = 0; i < 5; i++) {
-					drawObj(piramid[i]);
-				}
-			}
 		}
 	}
 	/*alpha*/
@@ -797,11 +764,64 @@ GLvoid Reshape(int w, int h) {
 	glViewport(0, 0, screen.width, screen.height);
 }
 bool up, down, right, left, bl_x, bl_y, bl_snow;
+bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	switch (value)
 	{
 	case 0: {
+
+		if (up) {
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+		if (down) {
+			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Right());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+		if (right) {
+			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Up());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+		if (left) {
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Up());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+		
+
+		plane.update();
+		// P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD
+		if (P_go) {
+			plane.set_speed(0.002f);
+		}
+		if (P_stop) {
+			plane.set_speed(-0.005f);
+		}
+		if (P_YL) {
+			plane.Yaw(degree);
+		}
+		if (P_YR) {
+			plane.Yaw(-degree);
+		}
+		if (P_RL) {
+			plane.Roll(-degree);
+		}
+		if (P_RR) {
+			plane.Roll(degree);
+		}
+		if (P_PU) {
+			plane.Pitch(degree);
+		}
+		if (P_PD) {
+			plane.Pitch(-degree);
+		}
+		plane.view();
+
+
 		if (tab) {
 			if (250 <= snow.size()) { snow.begin()->objData.DelObjData(); snow.erase(snow.begin()); }
 			for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
@@ -833,26 +853,6 @@ GLvoid Timer(int value) {
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		glutTimerFunc(50, Timer, value);
-		break;
-	}
-	case 231: {
-		for (int i = 0; i < 6; i++) {
-			cube[i].M.at(1) = glm::rotate(cube[i].M.at(1), glm::radians(degree), { 1.0,0.0,0.0 });
-		}
-		for (int i = 0; i < 5; i++) {
-			piramid[i].M.at(1) = glm::rotate(piramid[i].M.at(1), glm::radians(degree), { 1.0,0.0,0.0 });
-		}
-		if (bl_x)glutTimerFunc(50, Timer, value);
-		break;
-	}
-	case 232: {
-		for (int i = 0; i < 6; i++) {
-			cube[i].M.at(1) = glm::rotate(cube[i].M.at(1), glm::radians(degree), { 0.0,1.0,0.0 });
-		}
-		for (int i = 0; i < 5; i++) {
-			piramid[i].M.at(1) = glm::rotate(piramid[i].M.at(1), glm::radians(degree), { 0.0,1.0,0.0 });
-		}
-		if(bl_y)glutTimerFunc(50, Timer, value);
 		break;
 	}
 	case 241: {
@@ -927,19 +927,19 @@ GLvoid SpecialInput(int key, int x, int y) {
 	switch (key)
 	{
 	case GLUT_KEY_UP: {
-		up = true;
+		P_PU = true;
 		break;
 	}
 	case GLUT_KEY_DOWN: {
-		down = true;
+		P_PD = true;
 		break;
 	}
 	case GLUT_KEY_RIGHT: {
-		right = true;
+		P_RR = true;
 		break;
 	}
 	case GLUT_KEY_LEFT: {
-		left = true;
+		P_RL = true;
 		break;
 	}
 	default: { break; }
@@ -951,19 +951,19 @@ GLvoid SpecialInput_up(int key, int x, int y) {
 	switch (key)
 	{
 	case GLUT_KEY_UP: {
-		up = false;
+		P_PU = false;
 		break;
 	}
 	case GLUT_KEY_DOWN: {
-		down = false;
+		P_PD = false;
 		break;
 	}
 	case GLUT_KEY_RIGHT: {
-		right = false;
+		P_RR = false;
 		break;
 	}
 	case GLUT_KEY_LEFT: {
-		left = false;
+		P_RL = false;
 		break;
 	}
 	default: { break; }
@@ -974,33 +974,61 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
-	case '~':
-	case '`': {
-		c_p = c_p ? false : true;
+	case 'z': {
+		up = true;
+		break;
+	}
+	case 'x': {
+		down = true;
+		break;
+	}
+	case 'c': {
+		left = true;
+		break;
+	}
+	case 'v': {
+		right = true;
+		break;
+	}
+	case 'W':
+	case 'w': {
+		P_go = true;
 		break;
 	}
 	case 'S':
 	case 's': {
-		bl_x = false, bl_y = false;
-		for (int i = 0; i < 6; i++) {
-			cube[i].M.at(1) = df;
-		}
-		for (int i = 0; i < 5; i++) {
-			piramid[i].M.at(1) = df;
-		}
-		camera.set_default();
+		P_stop = true;
 		break;
 	}
-	case 'X':
-	case 'x': {
-		bl_x = bl_x ? false : true;
-		glutTimerFunc(50, Timer, 231);
+	case 'A':
+	case 'a': {
+		P_YL = true;
 		break;
 	}
-	case 'Y':
-	case 'y': {
-		bl_y = bl_y ? false : true;
-		glutTimerFunc(50, Timer, 232);
+	case 'D':
+	case 'd': {
+		P_YR = true;
+		break;
+	}
+	case '4': {
+		P_RL = true;
+		break;
+	}
+	case '6': {
+		P_RR = true;
+		break;
+	}
+	case '5': {
+		P_PD = true;
+		break;
+	}
+	case '8': {
+		P_PU = true;
+		break;
+	}
+	case '~':
+	case '`': {
+		c_p = c_p ? false : true;
 		break;
 	}
 	case ' ': {
@@ -1034,6 +1062,58 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
+	case 'z': {
+		up = false;
+		break;
+	}
+	case 'x': {
+		down = false;
+		break;
+	}
+	case 'c': {
+		left = false;
+		break;
+	}
+	case 'v': {
+		right = false;
+		break;
+	}
+	case 'W':
+	case 'w': {
+		P_go = false;
+		break;
+	}
+	case 'S':
+	case 's': {
+		P_stop = false;
+		break;
+	}
+	case 'A':
+	case 'a': {
+		P_YL = false;
+		break;
+	}
+	case 'D':
+	case 'd': {
+		P_YR = false;
+		break;
+	}
+	case '4': {
+		P_RL = false;
+		break;
+	}
+	case '6': {
+		P_RR = false;
+		break;
+	}
+	case '5': {
+		P_PD = false;
+		break;
+	}
+	case '8': {
+		P_PU = false;
+		break;
+	}
 	default:
 		break;
 	}

@@ -18,3 +18,5 @@ LoadTexture() 함수의 마지막 인자 (channel) 은 이미지 파일 마다 �
 윈도우 탐색기에서 파일에 우클릭 ->속성 ->디테일(자세히) ->Bit depth 를 확인!
 Bit depth 는 항상 8의 배수. 나누기 8 한 값을 채널인자로 넣어주면 됩니다. (1-4 까지 가능 그 밖의 이미지가 있으면 알려주세요)
 
+좌표축 당 각의 회전이 아닌 사원수회전을 이용하는 이유 
+https://m.blog.naver.com/PostView.nhn?blogId=jsjhahi&logNo=205951840&proxyReferer=https:%2F%2Fwww.google.com%2F
