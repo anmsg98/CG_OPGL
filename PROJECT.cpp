@@ -243,7 +243,7 @@ struct PLANE {
 
 	void set_speed(GLfloat d) {
 		speed += d;
-		if (speed < 0.0f)speed = 0.0f;
+		//if (speed < 0.0f)speed = 0.0f;
 		if (maxspeed < speed)speed = maxspeed;
 	}
 
@@ -263,8 +263,8 @@ struct PLANE {
 		camera.EYE = m * glm::vec4{ this->pos ,1.0f };
 	}
 
-	void update() {	
-		this->view();
+	void update(bool s) {	
+		if(!s)this->view();
 		this->go();
 		this->setPos();
 	}
@@ -409,7 +409,7 @@ GLvoid MakeShape() {
 	{
 		for (int i = 0; i < buildingnum; i++) {
 			LoadObj("cube.txt", building[i], "8/8/8");
-			building[i].Set_Color({ 1.0f,1.0f,GLfloat(rand() % 10) / 10.0f,0.5f });
+			building[i].Set_Color({ 1.0f,1.0f,GLfloat(rand() % 10) / 10.0f,1.0f });
 			building[i].M.resize(2, df);
 			building[i].M.at(1) = glm::scale(df, { 6.0f,50.0f,6.0f });
 			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
@@ -767,7 +767,7 @@ GLvoid drawScene() {
 		drawObj(plane.obj);
 
 		/*불투명*/
-		drawObj(light.obj);
+		//drawObj(light.obj);
 		drawObj(ground);
 		for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
 			drawObj(*i);
@@ -788,13 +788,39 @@ GLvoid drawScene() {
 
 /*이벤트 함수*/
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, bl_snow,stealth;
+bool up, down, left, right;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	switch (value)
 	{
 	case 0: {		
-		plane.update();
-		
+		bool s = false;
+		if (up) {
+			s = true;
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+		if (down) {
+			s = true;
+			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Right());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+		if (right) {
+			s = true;
+			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Up());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+		if (left) {
+			s = true;
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Up());
+			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+		}
+
+		plane.update(s);
 		// P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD
 
 		if (stealth) {
@@ -966,6 +992,22 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
+	case 'i': {
+		up = true;
+		break;
+	}
+	case 'k': {
+		down = true;
+		break;
+	}
+	case 'j': {
+		left = true;
+		break;
+	}
+	case 'l': {
+		right = true;
+		break;
+	}
 	case 'z': {
 		plane.mode = plane.mode == 0 ? 1 : 0;
 		plane.change_obj(plane.mode);
@@ -1051,6 +1093,22 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
+	case 'i': {
+		up = false;
+		break;
+	}
+	case 'k': {
+		down = false;
+		break;
+	}
+	case 'j': {
+		left = false;
+		break;
+	}
+	case 'l': {
+		right = false;
+		break;
+	}
 	case 'W':
 	case 'w': {
 		P_go = false;

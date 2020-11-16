@@ -17,7 +17,7 @@ out vec3 fragPos;
 void main(void)
 {
 	gl_Position = projMat*viewMat*worldMat*vec4(position, 1.0);
-	v_normal = vec3(worldMat*vec4(normal,1.0));
+	v_normal =normal;//vec3(worldMat*vec4(normal,1.0));
 	v_texCoord = texCoord;
 	v_color = color;
 	fragPos = vec3(worldMat*vec4(position, 1.0));
