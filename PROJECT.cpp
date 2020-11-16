@@ -54,7 +54,7 @@ struct ObjData {
 	GLint shine{ 16 };
 	std::vector<Vertex> vertices;
 	std::vector<Index> verIndices;
-	void DelObjData() { glDeleteVertexArrays(1, &this->VAO); }
+	void DelObjData() { glDeleteVertexArrays(1, &this->VAO); vertices.clear(); verIndices.clear(); }
 };
 struct Obj {
 	ObjData objData;
@@ -70,7 +70,7 @@ struct Obj {
 		return WM;
 
 	}
-	void DelObj() {glDeleteTextures(1, &this->texture);}
+	void DelObj() { if (use_texture)glDeleteTextures(1, &this->texture), use_texture = false; objData.DelObjData(); }
 	void Set_Alpha(const GLfloat alpha);
 	void Set_Color(const glm::vec4& color);
 	void Reverse_nor() {
@@ -104,7 +104,7 @@ struct LIGHT {
 	Obj obj;
 	GLfloat ambient{ 0.7f };
 	glm::vec3 spec{ 0.0f,0.0f,0.0f };
-	glm::vec3 pos{ 50.0,50.0,50.0 };
+	glm::vec3 pos{ 500.0,250.0,0.0 };
 	glm::vec3 col{ 1.0,1.0,1.0 };
 }light;
 
@@ -118,7 +118,7 @@ GLuint make_shaderProgram(GLuint vertexShader, GLuint fragmentShader);
 GLuint InitShader(GLvoid);
 bool InitBuffer(Obj& obj);
 void set_flip_texture(bool set);
-bool LoadTexture(Obj& obj, const char* file, GLsizei width, GLsizei height, int numOfChannel);
+bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int numOfChannel);
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[] = "8");	//	f = "8/"
 GLvoid drawObj(Obj& o);
 GLvoid drawScene(GLvoid);
@@ -158,20 +158,42 @@ struct PLANE {
 	glm::vec3 up{ 0.0,1.0,0.0 };
 
 	size_t eye_mode = 0;
-
+	int mode{ 0 };
 	GLfloat speed{ 0.0f };
 	GLfloat maxspeed{ 20.0f };
 	void init() {
 		// 0 Trans	1 Yaw	2 Pitch	3 Roll	4 Size
 		this->obj.M.resize(3, df);
-		LoadObj("plane.txt", this->obj, "8/8");
-		this->obj.M.at(2) = glm::scale(df, glm::vec3(0.02));
+		change_obj(mode);
+		//this->obj.M.at(2) = glm::scale(df, glm::vec3(0.06));
+		//this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
 		this->setPos();
 		this->default_color();
 	}
 
+	void change_obj(int mode) {
+		switch(mode) {
+		case 0: {
+			obj.DelObj();
+			LoadObj("airplane.txt", this->obj, "8/8/8");
+			this->obj.M.at(1) = glm::rotate(obj.M.at(1), glm::radians(180.0f), { 0.0,1.0,0.0 });
+			this->obj.M.at(2) = glm::scale(df, glm::vec3(0.06));
+			this->default_color();
+			break;
+		}
+		case 1: {
+			obj.DelObj();
+			LoadObj("Plane.txt", this->obj, "8/8");
+			this->obj.M.at(1) = glm::rotate(obj.M.at(1), glm::radians(180.0f), { 0.0,1.0,0.0 });
+			this->obj.M.at(2) = glm::scale(df, glm::vec3(0.02));
+			this->default_color();
+			break;
+		}
+		}
+	}
+
 	void default_color() {
-		this->obj.Set_Color({ 0.5,0.0,1.0,1.0 });
+		this->obj.Set_Color({ 0.5,0.8,0.2,1.0 });
 	}
 	void Stealth(bool on) {
 		if (on)obj.Set_Color({ 0.5,0.0,1.0,0.5 });
@@ -299,6 +321,7 @@ int main(int argc, char** argv) {
 	specLoc = glGetUniformLocation(shaderID, "spec");
 	texLoc = glGetUniformLocation(shaderID, "texture");
 	use_texLoc = glGetUniformLocation(shaderID, "use_tex");
+
 	/*  */
 	set_flip_texture(true);
 	DefaultObj();
@@ -734,6 +757,7 @@ GLvoid drawScene() {
 	glUniform1f(ambientLoc, light.ambient);
 	glUniform3f(specLoc, light.spec.r, light.spec.g, light.spec.b);
 	glUniform1i(texLoc, 0);
+
 	std::vector<Obj*> Alpha_objs;
 	/*그리기 시작*/
 	{
@@ -942,6 +966,11 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
+	case 'z': {
+		plane.mode = plane.mode == 0 ? 1 : 0;
+		plane.change_obj(plane.mode);
+		break;
+	}
 	case '0': {
 		if (!stealth) {
 			stealth = true;
