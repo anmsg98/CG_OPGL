@@ -24,3 +24,5 @@ https://m.blog.naver.com/PostView.nhn?blogId=jsjhahi&logNo=205951840&proxyRefere
 개인적인 목표: 
 버텍스,프래그먼트 하나씩의 셰이더만을 사용하기
 광원 여러개를 활용, 기상효과 보이기 (비, 번개, 천둥, 해, 달)
+
+내일 질문할것: glsl 가변길이 배열. 광원 여러개
