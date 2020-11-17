@@ -23,7 +23,7 @@
 	building tap
 */
 constexpr glm::mat4 df(1.0f);
-
+constexpr float ground_floor{-60.0f};
 /* uniform */
 
 GLuint worldLoc;
@@ -238,12 +238,20 @@ struct PLANE {
 	void go() {
 		glm::mat4 m = glm::translate(df, nDir() * -speed);
 		this->pos = m * glm::vec4{ this->pos,1.0f };
-		//update_coor(m);
+		check_area();
+	}
+
+	void check_area() {
+		/*바닥 체크*/
+		if (this->pos.y < ground_floor+15.0f) {
+			this->obj.Set_Color({ 1.0,0.2,0.2,1.0 });
+			this->pos.y = ground_floor+ 15.0f;
+		}
 	}
 
 	void set_speed(GLfloat d) {
 		speed += d;
-		//if (speed < 0.0f)speed = 0.0f;
+		if (speed < 0.0f)speed = 0.0f;
 		if (maxspeed < speed)speed = maxspeed;
 	}
 
@@ -261,6 +269,7 @@ struct PLANE {
 		}
 		camera.AT =glm::translate(df, nDir() * -15.0f)* glm::vec4(this->pos, 1.0f);
 		camera.EYE = m * glm::vec4{ this->pos ,1.0f };
+		if (camera.EYE.y < ground_floor+20.0f)camera.EYE.y = ground_floor+ 20.0f;
 	}
 
 	void update(bool s) {	
@@ -418,7 +427,7 @@ GLvoid MakeShape() {
 	{
 		LoadObj("cube.txt", ground, "8/8/8");
 		LoadTexture(ground, "grass.jpg", 512, 512, 3);
-		ground.M.push_back(glm::translate(df, { 0.0,-60.0,0.0 }));
+		ground.M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
 		ground.M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
 	}
 	/**/
@@ -767,7 +776,7 @@ GLvoid drawScene() {
 		drawObj(plane.obj);
 
 		/*불투명*/
-		//drawObj(light.obj);
+		drawObj(light.obj);
 		drawObj(ground);
 		for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
 			drawObj(*i);
@@ -845,10 +854,10 @@ GLvoid Timer(int value) {
 			plane.set_speed(-0.01f);
 		}
 		if (P_YL) {
-			plane.Yaw(degree/2);
+			plane.Yaw(degree/4);
 		}
 		if (P_YR) {
-			plane.Yaw(-degree/2);
+			plane.Yaw(-degree/4);
 		}
 		if (P_RL) {
 			plane.Roll(degree);
