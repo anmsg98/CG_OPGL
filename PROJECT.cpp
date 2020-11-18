@@ -9,21 +9,21 @@
 #include<algorithm>
 #include<gl/freeglut.h>
 #include<gl/freeglut_ext.h>
-#include<gl/glm/glm/glm.hpp>
-#include<gl/glm/glm/ext.hpp>
-#include<gl/glm/glm/gtc/matrix_transform.hpp>
+#include<gl/glm/glm.hpp>
+#include<gl/glm/ext.hpp>
+#include<gl/glm/gtc/matrix_transform.hpp>
 #include"stb_image.h"
 /*
-	light : space 
+	light : space
 	camera : 1 2 3
 	speed w s
-	rotate a d 8(up) 4(left) 5(down) 6(right) 
+	rotate a d 8(up) 4(left) 5(down) 6(right)
 	stealth 0
 	snow Q
 	building tap
 */
 constexpr glm::mat4 df(1.0f);
-constexpr float ground_floor{-60.0f};
+constexpr float ground_floor{ -60.0f };
 /* uniform */
 
 GLuint worldLoc;
@@ -50,7 +50,7 @@ struct Vertex {
 	glm::vec3 nor; // normal
 };
 struct ObjData {
-	GLuint VAO{0};
+	GLuint VAO{ 0 };
 	GLint shine{ 16 };
 	std::vector<Vertex> vertices;
 	std::vector<Index> verIndices;
@@ -95,7 +95,8 @@ struct SCREEN {
 	GLsizei width{ 800 };	//W/H
 	GLsizei height{ 600 };	//W/H
 	GLfloat n{ 0.1f };
-	GLfloat f{ 200000.0f };
+	//가시거리
+	GLfloat f{ 1000.0f };
 	glm::vec3 size_of_world{ 100.0f,100.0f,100.0f };//[-a:a]
 	GLfloat aspect() { return width / height; }
 	glm::mat4 proj_M() { return glm::perspective(glm::radians(this->fovy), this->aspect(), this->n, this->f); }
@@ -163,21 +164,22 @@ struct PLANE {
 	GLfloat maxspeed{ 20.0f };
 	void init() {
 		// 0 Trans	1 Yaw	2 Pitch	3 Roll	4 Size
-		this->obj.M.resize(3, df);
+		this->obj.M.resize(4, df);
 		change_obj(mode);
 		//this->obj.M.at(2) = glm::scale(df, glm::vec3(0.06));
 		//this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
 		this->setPos();
 		this->default_color();
+		this->obj.M.at(3) = glm::translate(df, { 0.0,-100.0,0.0 });
 	}
 
 	void change_obj(int mode) {
-		switch(mode) {
+		switch (mode) {
 		case 0: {
 			obj.DelObj();
-			LoadObj("airplane.txt", this->obj, "8/8/8");
+			LoadObj("airplane.obj", this->obj, "8/8/8");
 			this->obj.M.at(1) = glm::rotate(obj.M.at(1), glm::radians(180.0f), { 0.0,1.0,0.0 });
-			this->obj.M.at(2) = glm::scale(df, glm::vec3(0.06));
+			this->obj.M.at(2) = glm::scale(df, glm::vec3(0.25));
 			this->default_color();
 			break;
 		}
@@ -200,9 +202,9 @@ struct PLANE {
 		else this->default_color();
 	}
 	void update_coor(glm::mat4& m) {
-		head = glm::normalize(m * glm::vec4(head,1.0f));
-		tail = glm::normalize(m * glm::vec4(tail,1.0f));
-		up = glm::normalize(m * glm::vec4(up,1.0f));
+		head = glm::normalize(m * glm::vec4(head, 1.0f));
+		tail = glm::normalize(m * glm::vec4(tail, 1.0f));
+		up = glm::normalize(m * glm::vec4(up, 1.0f));
 	}
 
 	glm::vec3 nDir() { return glm::normalize(this->tail - this->head); }
@@ -221,17 +223,17 @@ struct PLANE {
 
 	void Yaw(GLfloat degree) {
 		glm::mat4 m = yaw_(degree);
-		obj.M.at(1) = m*obj.M.at(1);
+		obj.M.at(1) = m * obj.M.at(1);
 		update_coor(m);
 	}
 	void Pitch(GLfloat degree) {
 		glm::mat4 m = pitch_(degree);
-		obj.M.at(1) =m*obj.M.at(1);
+		obj.M.at(1) = m * obj.M.at(1);
 		update_coor(m);
 	}
 	void Roll(GLfloat degree) {
 		glm::mat4 m = roll_(degree);
-		obj.M.at(1) = m*obj.M.at(1);
+		obj.M.at(1) = m * obj.M.at(1);
 		update_coor(m);
 	}
 
@@ -243,9 +245,9 @@ struct PLANE {
 
 	void check_area() {
 		/*바닥 체크*/
-		if (this->pos.y < ground_floor+15.0f) {
+		if (this->pos.y < ground_floor + 15.0f) {
 			this->obj.Set_Color({ 1.0,0.2,0.2,1.0 });
-			this->pos.y = ground_floor+ 15.0f;
+			this->pos.y = ground_floor + 15.0f;
 		}
 	}
 
@@ -264,16 +266,16 @@ struct PLANE {
 		switch (eye_mode)
 		{
 		case 0: {m = glm::translate(df, nDir() * 100.0f); break; }
-		case 1: {m= glm::translate(df, nDir()*400.0f); break;}
-		case 2: {m = glm::translate(df, Right() * 5.0f)* glm::translate(df, nDir() * 10.0f); break; }
+		case 1: {m = glm::translate(df, nDir() * 400.0f); break; }
+		case 2: {m = glm::translate(df, Right() * 5.0f) * glm::translate(df, nDir() * 10.0f); break; }
 		}
-		camera.AT =glm::translate(df, nDir() * -15.0f)* glm::vec4(this->pos, 1.0f);
+		camera.AT = glm::translate(df, nDir() * -15.0f) * glm::vec4(this->pos, 1.0f);
 		camera.EYE = m * glm::vec4{ this->pos ,1.0f };
-		if (camera.EYE.y < ground_floor+20.0f)camera.EYE.y = ground_floor+ 20.0f;
+		if (camera.EYE.y < ground_floor + 20.0f)camera.EYE.y = ground_floor + 20.0f;
 	}
 
-	void update(bool s) {	
-		if(!s)this->view();
+	void update(bool s) {
+		if (!s)this->view();
 		this->go();
 		this->setPos();
 	}
@@ -417,19 +419,20 @@ GLvoid MakeShape() {
 	plane.init();
 	{
 		for (int i = 0; i < buildingnum; i++) {
-			LoadObj("cube.txt", building[i], "8/8/8");
+			LoadObj("apartment.obj", building[i], "8/8/8");
 			building[i].Set_Color({ 1.0f,1.0f,GLfloat(rand() % 10) / 10.0f,1.0f });
 			building[i].M.resize(2, df);
-			building[i].M.at(1) = glm::scale(df, { 6.0f,50.0f,6.0f });
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			building[i].M.at(1) = glm::scale(df, { 0.3f,0.3f,0.3f });
+			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
 		LoadObj("cube.txt", ground, "8/8/8");
-		LoadTexture(ground, "grass.jpg", 512, 512, 3);
+		LoadTexture(ground, "sea.jpg", 512, 512, 2);
 		ground.M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
 		ground.M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
 	}
+
 	/**/
 };
 
@@ -740,7 +743,7 @@ GLvoid drawObj(Obj& o) {
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
-bool FarFromEYE(Obj* a,Obj* b) {
+bool FarFromEYE(Obj* a, Obj* b) {
 	glm::vec3 A{ a->world_M() * glm::vec4(a->objData.vertices.at(0).pos,1.0f) };
 	glm::vec3 B{ b->world_M() * glm::vec4(b->objData.vertices.at(0).pos,1.0f) };
 	return glm::distance(B, camera.EYE) < glm::distance(A, camera.EYE);
@@ -796,13 +799,13 @@ GLvoid drawScene() {
 }
 
 /*이벤트 함수*/
-bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, bl_snow,stealth;
+bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, bl_snow, stealth;
 bool up, down, left, right;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	switch (value)
 	{
-	case 0: {		
+	case 0: {
 		bool s = false;
 		if (up) {
 			s = true;
@@ -836,8 +839,8 @@ GLvoid Timer(int value) {
 			constexpr int tm{ 50 };
 			constexpr int tm2{ 25 };
 			static int time{ tm };
-			if(tm2<time)plane.Stealth(true);
-			else if(time%2) {
+			if (tm2 < time)plane.Stealth(true);
+			else if (time % 2) {
 				plane.Stealth(true);
 			}
 			else {
@@ -848,7 +851,7 @@ GLvoid Timer(int value) {
 		}
 
 		if (P_go) {
-			plane.set_speed(0.005f);
+			plane.set_speed(0.5f);
 		}
 		if (P_stop) {
 			plane.set_speed(-0.01f);
@@ -866,21 +869,21 @@ GLvoid Timer(int value) {
 			plane.Roll(-degree);
 		}
 		if (P_PU) {
-			plane.Pitch(degree/5);
+			plane.Pitch(degree / 5);
 		}
 		if (P_PD) {
-			plane.Pitch(-degree/5);
+			plane.Pitch(-degree / 5);
 		}
 
-		
-			if (250 <= snow.size()) { snow.begin()->objData.DelObjData(); snow.erase(snow.begin()); }
-			for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
-				if ((i->world_M()* glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
-					i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
-				}
-				else i->M.at(0) = glm::translate(i->M.at(0), { 0.0,-1.0,0.0 });
+
+		if (250 <= snow.size()) { snow.begin()->objData.DelObjData(); snow.erase(snow.begin()); }
+		for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
+			if ((i->world_M() * glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
+				i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
 			}
-		
+			else i->M.at(0) = glm::translate(i->M.at(0), { 0.0,-1.0,0.0 });
+		}
+
 		glutTimerFunc(50, Timer, value);
 		break;
 	}
@@ -1030,7 +1033,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	}
 	case '\t': {
 		for (int i = 0; i < buildingnum; i++) {
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 		break;
 	}
@@ -1074,14 +1077,14 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		P_RR = true;
 		break;
 	}
-	case '5': {
+	case '8': {
 		P_PD = true;
 		break;
 	}
-	case '8': {
+	case '5': {
 		P_PU = true;
 		break;
-	}	
+	}
 	case ' ': {
 		if (light.ambient < 1.0f)light.ambient += 0.4f;
 		else light.ambient = 0.0f;
@@ -1146,11 +1149,11 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 		P_RR = false;
 		break;
 	}
-	case '5': {
+	case '8': {
 		P_PD = false;
 		break;
 	}
-	case '8': {
+	case '5': {
 		P_PU = false;
 		break;
 	}
