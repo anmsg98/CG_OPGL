@@ -38,7 +38,7 @@ void main(void)
 
 		result = result + vec4((diffuse*v_color.rgb+specular*spec), v_color.a );
 	}
-	result = result/light_num;
+	//result = result/light_num; 최대밝기 제한시 해제
 	result = result + vec4(ambient*v_color.rgb, v_color.a);
 	if(use_tex==1){result = texture(texture1, v_texCoord) * result;}
 	gl_FragColor = result;

@@ -19,17 +19,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="Handle_evnts.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="Obj.h" />
+    <ClInclude Include="PLANE.h" />
+    <ClInclude Include="screen.h" />
     <ClInclude Include="shader_sunkue.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="texture_sunkue.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="Handle_evnts.cpp" />
     <ClCompile Include="light.cpp" />
     <ClCompile Include="Obj.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PLANE.cpp" />
+    <ClCompile Include="screen.cpp" />
     <ClCompile Include="shader_sunkue.cpp" />
     <ClCompile Include="texture_sunkue.cpp" />
   </ItemGroup>

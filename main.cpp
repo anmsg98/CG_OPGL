@@ -3,8 +3,11 @@
 #include"Obj.h"
 #include"texture_sunkue.h"
 #include"shader_sunkue.h"
+#include"camera.h"
+#include"PLANE.h"
+#include"screen.h"
 /*
-	sun : space 
+	ambient : space 
 	camera : 1 2 3
 	speed w s
 	rotate a d 8(up) 4(left) 5(down) 6(right) 
@@ -12,33 +15,6 @@
 	snow Q
 	building tap
 */
-constexpr glm::mat4 df(1.0f);
-constexpr float ground_floor{ -60.0f };
-constexpr int buildingnum{ 50 };
-constexpr GLfloat groundsize{ 10000.0f };
-
-/* structs */
-struct CAMERA {
-	glm::vec3 EYE{ 0.0f,0.0f,1000.0f };
-	glm::vec3 AT{ 0.0f,0.0f,0.0f };
-	glm::vec3 UP{ 0.0f,1.0f,0.0f };
-	glm::vec3 Dir() { return glm::normalize(this->EYE - this->AT); }
-	glm::vec3 Right() { return glm::normalize(glm::cross(this->UP, this->Dir())); }
-	glm::vec3 Up() { return glm::normalize(glm::cross(this->Dir(), this->Right())); }
-	glm::mat4 view_M() {
-		return glm::lookAt(this->EYE, this->AT, this->UP);
-	}
-}camera;
-struct SCREEN {
-	GLfloat fovy{ 30.0f }; //glm::Radians(fovy)
-	GLsizei width{ 800 };	//W/H
-	GLsizei height{ 600 };	//W/H
-	GLfloat n{ 0.1f };
-	GLfloat f{ 200000.0f };
-	glm::vec3 size_of_world{ 100.0f,100.0f,100.0f };//[-a:a]
-	GLfloat aspect() { return width / height; }
-	glm::mat4 proj_M() { return glm::perspective(glm::radians(this->fovy), this->aspect(), this->n, this->f); }
-}screen;
 
 /*Funcs*/
 GLvoid drawObj(Obj& o);
@@ -56,115 +32,6 @@ GLvoid MakeShape();
 GLvoid DefaultObj();
 GLvoid print_message();
 /*struct funcs*/
-
-/*user data*/
-struct PLANE {
-	Obj obj;
-	glm::vec3 pos{ 0.0,-100.0,0.0 };
-	glm::vec3 head{ 0.0,0.0,-1.0 };
-	glm::vec3 tail{ 0.0,0.0,1.0 };
-	glm::vec3 up{ 0.0,1.0,0.0 };
-
-	size_t eye_mode = 0;
-	GLfloat speed{ 0.0f };
-	GLfloat maxspeed{ 20.0f };
-	void init() {
-		// 0 Trans	1 Yaw	2 Pitch	3 Roll	4 Size
-		this->obj.M.resize(3, df);
-		LoadObj("airplane.obj", this->obj, "8/8/8");
-		this->obj.M.at(2) = glm::scale(df, glm::vec3(0.25f));
-		this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
-		this->setPos();
-		this->default_color();
-	}
-
-
-	void default_color() {
-		this->obj.Set_Color({ 0.5,0.8,0.2,1.0 });
-	}
-	void Stealth(bool on) {
-		if (on)obj.Set_Color({ 0.5,0.0,1.0,0.5 });
-		else this->default_color();
-	}
-	void update_coor(glm::mat4& m) {
-		head = glm::normalize(m * glm::vec4(head,1.0f));
-		tail = glm::normalize(m * glm::vec4(tail,1.0f));
-		up = glm::normalize(m * glm::vec4(up,1.0f));
-	}
-
-	glm::vec3 nDir() { return glm::normalize(this->tail - this->head); }
-	glm::vec3 Right() { return glm::normalize(glm::cross(this->up, this->nDir())); }
-	glm::vec3 Up() { return glm::normalize(glm::cross(this->nDir(), this->Right())); }
-
-	glm::mat4 yaw_(GLfloat degree) {
-		return glm::rotate(df, glm::radians(degree), Up());
-	}
-	glm::mat4 pitch_(GLfloat degree) {
-		return glm::rotate(df, glm::radians(degree), Right());
-	}
-	glm::mat4 roll_(GLfloat degree) {
-		return glm::rotate(df, glm::radians(degree), nDir());
-	}
-
-	void Yaw(GLfloat degree) {
-		glm::mat4 m = yaw_(degree);
-		obj.M.at(1) = m*obj.M.at(1);
-		update_coor(m);
-	}
-	void Pitch(GLfloat degree) {
-		glm::mat4 m = pitch_(degree);
-		obj.M.at(1) =m*obj.M.at(1);
-		update_coor(m);
-	}
-	void Roll(GLfloat degree) {
-		glm::mat4 m = roll_(degree);
-		obj.M.at(1) = m*obj.M.at(1);
-		update_coor(m);
-	}
-
-	void go() {
-		glm::mat4 m = glm::translate(df, nDir() * -speed);
-		this->pos = m * glm::vec4{ this->pos,1.0f };
-		check_area();
-	}
-
-	void check_area() {
-		/*¹Ù´Ú Ã¼Å©*/
-		if (this->pos.y < ground_floor+15.0f) {
-			//this->obj.Set_Color({ 1.0,0.2,0.2,1.0 });
-			this->pos.y = ground_floor+ 15.0f;
-		}
-	}
-
-	void set_speed(GLfloat d) {
-		speed += d;
-		if (speed < 0.0f)speed = 0.0f;
-		if (maxspeed < speed)speed = maxspeed;
-	}
-
-	void setPos() {
-		this->obj.M.at(0) = glm::translate(df, pos);
-	}
-
-	void view() {
-		glm::mat4 m;
-		switch (eye_mode)
-		{
-		case 0: {m = glm::translate(df, nDir() * 100.0f); break; }
-		case 1: {m= glm::translate(df, nDir()*400.0f); break;}
-		case 2: {m = glm::translate(df, Right() * 5.0f)* glm::translate(df, nDir() * 10.0f); break; }
-		}
-		camera.AT =glm::translate(df, nDir() * -15.0f)* glm::vec4(this->pos, 1.0f);
-		camera.EYE = m * glm::vec4{ this->pos ,1.0f };
-		if (camera.EYE.y < ground_floor+20.0f)camera.EYE.y = ground_floor+ 20.0f;
-	}
-
-	void update(bool s) {	
-		if(!s)this->view();
-		this->go();
-		this->setPos();
-	}
-}plane;
 
 
 Obj coordinate, world, ground, building[buildingnum];
@@ -307,9 +174,10 @@ GLvoid MakeShape() {
 	{
 		for (int i = 0; i < buildingnum; i++) {
 			LoadObj("apartment.obj", building[i], "8/8/8");
-			building[i].Set_Color({ 1.0f,1.0f,GLfloat(rand() % 10) / 10.0f,1.0f });
-			building[i].M.resize(2, df);
-			building[i].M.at(1) = glm::scale(df, glm::vec3(1.0f));
+			building[i].Set_Color({ 0.5f,0.5f,GLfloat(rand() % 10) / 10.0f,1.0f });
+			building[i].M.resize(3, df);
+			building[i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			building[i].M.at(1) = glm::rotate(df,glm::radians(GLfloat(rand()%360)), {0.0,1.0,0.0});
 			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-50.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
