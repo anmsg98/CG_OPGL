@@ -35,3 +35,4 @@ struct Obj {
 };
 
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]);
+GLvoid drawObj(Obj& o);

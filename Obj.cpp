@@ -122,3 +122,15 @@ bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[])
 	InitBuffer(obj);
 	return true;
 }
+
+GLvoid drawObj(Obj& o) {
+	glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(o.world_M()));
+	glUniform1i(shineLoc, o.objData.shine);
+	glUniform1i(use_texLoc, o.use_texture);
+	glBindVertexArray(o.objData.VAO);
+	glPolygonMode(GL_FRONT, o.drawmode);
+	if (o.use_texture) { glActiveTexture(GL_TEXTURE0), glBindTexture(GL_TEXTURE_2D, o.texture); }
+	glDrawElements(o.shape, o.objData.verIndices.size(), GL_UNSIGNED_SHORT, 0);
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}

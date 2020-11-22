@@ -6,6 +6,7 @@
 #include"camera.h"
 #include"PLANE.h"
 #include"screen.h"
+#include"Alpha_blending.h"
 /*
 	ambient : space 
 	camera : 1 2 3
@@ -17,8 +18,8 @@
 */
 
 /*Funcs*/
-GLvoid drawObj(Obj& o);
 GLvoid drawScene(GLvoid);
+/**/
 GLvoid Reshape(int w, int h);
 GLvoid SpecialInput(int key, int x, int y);
 GLvoid SpecialInput_up(int key, int x, int y);
@@ -28,10 +29,11 @@ GLvoid Mouse(int button, int state, int x, int y);
 GLvoid Motion(int x, int y);
 GLvoid MouseWheel(int button, int dir, int x, int y);
 GLvoid Timer(int value);
+/**/
 GLvoid MakeShape();
 GLvoid DefaultObj();
 GLvoid print_message();
-/*struct funcs*/
+/**/
 
 
 Obj coordinate, world, ground, building[buildingnum];
@@ -191,30 +193,6 @@ GLvoid MakeShape() {
 };
 
 /*그리기 함수*/
-GLvoid drawObj(Obj& o) {
-	glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(o.world_M()));
-	glUniform1i(shineLoc, o.objData.shine);
-	glUniform1i(use_texLoc, o.use_texture);
-	glBindVertexArray(o.objData.VAO);
-	glPolygonMode(GL_FRONT, o.drawmode);
-	if (o.use_texture) { glActiveTexture(GL_TEXTURE0), glBindTexture(GL_TEXTURE_2D, o.texture); }
-	glDrawElements(o.shape, o.objData.verIndices.size(), GL_UNSIGNED_SHORT, 0);
-	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-bool FarFromEYE(Obj* a,Obj* b) {
-	glm::vec3 A{ a->world_M() * glm::vec4(a->objData.vertices.at(0).pos,1.0f) };
-	glm::vec3 B{ b->world_M() * glm::vec4(b->objData.vertices.at(0).pos,1.0f) };
-	return glm::distance(B, camera.EYE) < glm::distance(A, camera.EYE);
-}
-GLvoid Sort_Alpha_blending(std::vector<Obj*>& all_obj) {
-	sort(all_obj.begin(), all_obj.end(), FarFromEYE);
-}
-GLvoid Draw_Alpha_blending(std::vector<Obj*>& all_obj) {
-	for (std::vector<Obj*>::iterator i{ all_obj.begin() }, e{ all_obj.end() }; i != e; i++) {
-		drawObj(**i);
-	}
-}
 GLvoid drawScene() {
 	/*기본 배경*/
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);

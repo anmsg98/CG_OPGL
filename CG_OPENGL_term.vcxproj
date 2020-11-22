@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Alpha_blending.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="Handle_evnts.h" />
     <ClInclude Include="Header.h" />
@@ -31,6 +32,7 @@
     <ClInclude Include="texture_sunkue.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Alpha_blending.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="Handle_evnts.cpp" />
     <ClCompile Include="light.cpp" />
