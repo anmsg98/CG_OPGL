@@ -22,12 +22,16 @@
     <ClInclude Include="Header.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="Obj.h" />
+    <ClInclude Include="shader_sunkue.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="texture_sunkue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="light.cpp" />
     <ClCompile Include="Obj.cpp" />
-    <ClCompile Include="PROJECT.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="shader_sunkue.cpp" />
+    <ClCompile Include="texture_sunkue.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

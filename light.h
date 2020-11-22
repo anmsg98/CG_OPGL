@@ -1,7 +1,13 @@
 #pragma once
 #include"Header.h"
+#ifndef OBJ_H
 #include"Obj.h"
+#endif // !OBJ_H
+#ifndef LIGHT_H
+#define LIGHT_H
 constexpr int MAX_LIGHTS{ 8 };
+#endif // !LIGHT_H
+
 
 struct LIGHT {
 	static GLfloat ambient;

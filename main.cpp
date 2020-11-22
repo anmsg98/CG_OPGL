@@ -1,8 +1,8 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include"Header.h"
 #include"light.h"
 #include"Obj.h"
-#include"stb_image.h"
+#include"texture_sunkue.h"
+#include"shader_sunkue.h"
 /*
 	sun : space 
 	camera : 1 2 3
@@ -16,26 +16,6 @@ constexpr glm::mat4 df(1.0f);
 constexpr float ground_floor{ -60.0f };
 constexpr int buildingnum{ 50 };
 constexpr GLfloat groundsize{ 10000.0f };
-//constexpr int MAX_LIGHTS{ 8 };
-/* uniform */
-
-
-GLuint worldLoc;
-GLuint viewLoc;
-GLuint projLoc;
-GLuint lightColLoc;
-GLuint lightPosLoc;
-GLuint viewPosLoc;
-GLuint shineLoc;
-GLuint ambientLoc;
-GLuint ambientColorLoc;
-GLuint specLoc;
-GLuint texLoc;
-GLuint use_texLoc;
-GLuint light_numLoc;
-
-/*  */
-GLuint shaderID;
 
 /* structs */
 struct CAMERA {
@@ -61,12 +41,6 @@ struct SCREEN {
 }screen;
 
 /*Funcs*/
-GLchar* ReadSource(const GLchar file[]);
-GLuint make_vertexShaders(const GLchar file[]);
-GLuint make_fragmentShaders(const GLchar file[]);
-GLuint make_shaderProgram(GLuint vertexShader, GLuint fragmentShader);
-GLuint InitShader(GLvoid);
-bool InitBuffer(Obj& obj);
 void set_flip_texture(bool set);
 bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int numOfChannel);
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[] = "8");	//	f = "8/"
@@ -85,18 +59,6 @@ GLvoid MakeShape();
 GLvoid DefaultObj();
 GLvoid print_message();
 /*struct funcs*/
-void Obj::Set_Alpha(const GLfloat alpha) {
-	for (std::vector<Vertex>::iterator i{ this->objData.vertices.begin() }, e{ this->objData.vertices.end() }; i != e; i++) {
-		i->col.a = alpha;
-	}
-	InitBuffer(*this);
-}
-void Obj::Set_Color(const glm::vec4& color) {
-	for (std::vector<Vertex>::iterator i{ this->objData.vertices.begin() }, e{ this->objData.vertices.end() }; i != e; i++) {
-		i->col = color;
-	}
-	InitBuffer(*this);
-}
 
 /*user data*/
 struct PLANE {
@@ -248,19 +210,8 @@ int main(int argc, char** argv) {
 		std::exit(EXIT_FAILURE);
 	}
 	/* uniform */
-	worldLoc = glGetUniformLocation(shaderID, "worldMat");
-	viewLoc = glGetUniformLocation(shaderID, "viewMat");
-	projLoc = glGetUniformLocation(shaderID, "projMat");
-	lightColLoc = glGetUniformLocation(shaderID, "lightColor");
-	lightPosLoc = glGetUniformLocation(shaderID, "lightPos");
-	viewPosLoc = glGetUniformLocation(shaderID, "viewPos");
-	shineLoc = glGetUniformLocation(shaderID, "shine");
-	ambientLoc = glGetUniformLocation(shaderID, "ambientLight");
-	specLoc = glGetUniformLocation(shaderID, "spec");
-	texLoc = glGetUniformLocation(shaderID, "texture");
-	use_texLoc = glGetUniformLocation(shaderID, "use_tex");
-	light_numLoc = glGetUniformLocation(shaderID, "light_num");
-	ambientColorLoc = glGetUniformLocation(shaderID, "ambientColor");
+	init_uniform_Loc();
+
 	/*  */
 	set_flip_texture(true);
 	DefaultObj();
@@ -374,298 +325,9 @@ GLvoid MakeShape() {
 	/**/
 };
 
-/*셰이더 함수*/
-GLchar* ReadSource(const GLchar file[]) {
-	std::ifstream in(file, std::ios::in);
-	GLchar* s;
-	if (in.is_open()) {
-		in.seekg(0, std::ios::end);
-
-		int size = in.tellg();
-		s = new GLchar[size + 1]{ '\0' };
-		in.seekg(0, std::ios::beg);
-		in.read(&s[0], size);
-	}
-	else {
-		std::cerr << "ERROR: file read 실패\n" << file << '\n';
-		return nullptr;
-	}
-	//std::cout << "\n========\n"<<file<<'\n' << s << "\n==========\n";
-	in.close();
-	return s;
-}
-GLuint make_vertexShaders(const GLchar file[])
-{
-	GLchar* vertexShaderSource;
-	vertexShaderSource = ReadSource(file);/*.glsl*/
-
-	//--- 버텍스 세이더 읽어 저장하고 컴파일 하기
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	GLint result;
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &result);
-	if (!result)
-	{
-		GLchar errorLog[512];
-		glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: vertex shader 컴파일 실패\n" << errorLog << '\n';
-		return false;
-	}
-	return vertexShader;
-}
-GLuint make_fragmentShaders(const GLchar file[])
-{
-	GLchar* fragmentShaderSource;
-	fragmentShaderSource = ReadSource(file);/*.glsl*/
-	//--- 프래그먼트 세이더 읽어 저장하고 컴파일하기
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	GLint result;
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &result);
-	if (!result)
-	{
-		GLchar errorLog[512];
-		glGetShaderInfoLog(fragmentShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: fragment shader 컴파일 실패\n" << errorLog << '\n';
-		return false;
-	}
-	return fragmentShader;
-}
-GLuint make_shaderProgram(const GLuint vertexShader, const GLuint fragmentShader)
-{
-	GLuint ShaderProgramID = glCreateProgram(); //--- 세이더 프로그램 만들기
-	glAttachShader(ShaderProgramID, vertexShader); //--- 세이더 프로그램에 버텍스 세이더 붙이기
-	glAttachShader(ShaderProgramID, fragmentShader); //--- 세이더 프로그램에 프래그먼트 세이더 붙이기
-	glLinkProgram(ShaderProgramID); //--- 세이더 프로그램 링크하기
-	glDeleteShader(vertexShader); //--- 세이더 프로그램에 링크하여 세이더 객체 자체는 삭제 가능
-	glDeleteShader(fragmentShader);
-
-	GLint result{ 0 };
-	glGetProgramiv(ShaderProgramID, GL_LINK_STATUS, &result); // ---세이더가 잘 연결되었는지 체크하기
-	if (!result) {
-		GLchar errorLog[512];
-		glGetProgramInfoLog(ShaderProgramID, 512, NULL, errorLog);
-		std::cerr << "ERROR: shader program 연결 실패\n" << errorLog << '/n';
-		return false;
-	}
-	/*언제 어디서나 부를 수 있다. 여기가 아니여도 된다.*/
-	glUseProgram(ShaderProgramID);	//--- 만들어진 세이더 프로그램 사용하기
-									//--- 여러 개의 세이더프로그램 만들 수 있고, 특정 프로그램을 사용하려면
-									//--- glUseProgram 함수를 호출하여 사용 할 특정 프로그램을 지정한다.
-									//---** 사용하기 직전에 호출할 수 있다.
-	return ShaderProgramID;
-}
-GLuint InitShader() {
-	GLuint vertexShader = make_vertexShaders("shader/vertex.txt");
-	GLuint fragmentShader = make_fragmentShaders("shader/fragment.txt");
-	shaderID = make_shaderProgram(vertexShader, fragmentShader);
-	return shaderID;
-}
-bool InitBuffer(Obj& obj)
-{
-	if (obj.objData.VAO != 0)glDeleteVertexArrays(1, &(obj.objData.VAO));
-	GLuint abo;	// array buffer obj
-	GLuint ebo;	// elements bo
-	//--- Vertex Array Object 생성
-	glGenVertexArrays(1, &(obj.objData.VAO));
-	glBindVertexArray(obj.objData.VAO);
-	/*make abo and load data*/
-	glGenBuffers(1, &abo);
-	glBindBuffer(GL_ARRAY_BUFFER, abo);
-	glBufferData(GL_ARRAY_BUFFER, obj.objData.vertices.size() * sizeof(Vertex), obj.objData.vertices.data(), GL_STATIC_DRAW);
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj.objData.verIndices.size() * sizeof(Index), obj.objData.verIndices.data(), GL_STATIC_DRAW);
-
-	//--- position(vertex)
-	GLint positionAttribute = glGetAttribLocation(shaderID, "position");
-	if (positionAttribute == -1) {
-		std::cerr << "position 속성 설정 실패" << '\n';
-		return false;
-	}
-	glEnableVertexAttribArray(positionAttribute);
-	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, pos));
-	//--- vertex color(frag)
-	GLint colorAttribute = glGetAttribLocation(shaderID, "color");
-	if (colorAttribute == -1) {
-		std::cerr << "color 속성 설정 실패" << '\n';
-		return false;
-	}
-	glEnableVertexAttribArray(colorAttribute);
-	glVertexAttribPointer(colorAttribute, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, col));
-
-
-	//--- normal
-	GLint nomalAttribute = glGetAttribLocation(shaderID, "normal");
-	if (nomalAttribute == -1) {
-		std::cerr << "normal 속성 설정 실패" << '\n';
-		return false;
-	}
-	glEnableVertexAttribArray(nomalAttribute);
-	glVertexAttribPointer(nomalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, nor));
-
-	//--- texture coordinates
-	GLint texCoordAttribute = glGetAttribLocation(shaderID, "texCoord");
-	if (texCoordAttribute == -1) {
-		std::cerr << "texCoord 속성 설정 실패" << '\n';
-		return false;
-	}
-	glEnableVertexAttribArray(texCoordAttribute);
-	glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, tex));
-
-	glBindVertexArray(0);
-	glDeleteBuffers(1, &abo);
-	glDeleteBuffers(1, &ebo);
-	return true;
-}
 /*데이터 로드 함수*/
-void set_flip_texture(bool set) {
-	stbi_set_flip_vertically_on_load(set);
-}
-bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int numOfChannel)
-{
 
-	//width,height = 2^n
-	//obj.Set_Color(glm::vec4(1.0f)); // --회색조
-	char F[256];
-	strncpy_s(F, "res/", sizeof(F));
-	strncat_s(F, file, sizeof(F));
-	GLuint texture;
-	glGenTextures(1, &texture); //--- 텍스처 생성
-	glBindTexture(GL_TEXTURE_2D, texture); //--- 텍스처 바인딩
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); //GL_REPEAT //GL_CLAMP // GL_MIRRORED_REPEAT
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//GL_NEAREST // GL_LINEAR
-	stbi_uc* data = stbi_load(F, &width, &height, &numOfChannel, 0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
-	if (data == nullptr) {
-		std::cerr << "texture image error : " << file;
-	}
-	GLenum format;
-	switch (numOfChannel)
-	{
-	case 1: {
-		format = GL_RED;
-		break;
-	}
-	case 2: {
-		format = GL_RG;
-		break;
-	}
-	case 3: {
-		format = GL_RGB;
-		break;
-	}
-	case 4: {
-		format = GL_RGBA;
-		break;
-	}
-	default: {
-		std::cerr << "image format error : " << file << '\n';
-		return false;
-		break;
-	}
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, numOfChannel, width, height, 0, format, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
-	obj.texture = texture;
-	glGenerateMipmap(GL_TEXTURE_2D);
-	stbi_image_free(data);
-	obj.use_texture = true;
-	return true;
-}
-bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) {
-	std::string OBJ{ "obj/" };
-	std::ifstream in(OBJ + objFile, std::ios::in);
-	if (!in.is_open()) {
-		std::cerr << "ERROR: Objfile read 실패\n" << objFile << '\n';
-		return false;
-	}
 
-	char line[512]{ '\0' };
-	Vertex V;
-	std::vector<glm::vec3> P(1);
-	std::vector<glm::vec2> T(1);
-	std::vector<glm::vec3> N(1);
-	V.col = glm::vec4(1.0f);
-	glm::vec3 tv3;
-	glm::vec2 tv2;
-
-	while (!in.eof()) {
-		in.getline(line, 512);
-		if (strncmp(line, "v ", 2) == 0) {
-			sscanf_s(&line[2], "%f %f %f", &tv3.x, &tv3.y, &tv3.z);
-			P.push_back(tv3);
-		}
-		else if (strncmp(line, "vt ", 3) == 0) {
-			sscanf_s(&line[3], "%f %f", &tv2.x, &tv2.y);
-			T.push_back(tv2);
-		}
-		else if (strncmp(line, "vn ", 3) == 0) {
-			sscanf_s(&line[3], "%f %f %f", &tv3.x, &tv3.y, &tv3.z);
-			N.push_back(tv3);
-		}
-		else if (strncmp(line, "f ", 2) == 0) {
-			/*
-			char* end = line + sizeof(line) / sizeof(line[0]);
-			int num = std::count_if(line, end, [](char c) {return c == '/'; });
-			switch (num)
-			{
-			default:
-				break;
-			}*/
-			unsigned int verI[3], texI[3], norI[3];
-			bool vc{ false }, tc{ false }, nc{ false };
-			if (f_style == "8") {
-				vc = true;
-				sscanf_s(&line[2], "%d %d %d", &verI[0], &verI[1], &verI[2]);
-			}
-			else if (f_style == "8//") {
-				vc = true;
-				sscanf_s(&line[2], "%d// %d// %d//", &verI[0], &verI[1], &verI[2]);
-			}
-			else if (f_style == "8/8/") {
-				vc = true, tc = true;
-				sscanf_s(&line[2], "%d/%d/ %d/%d/ %d/%d/", &verI[0], &texI[0],
-					&verI[1], &texI[1], &verI[2], &texI[2]);
-			}
-			else if (f_style == "8//8") {
-				vc = true, nc = true;
-				sscanf_s(&line[2], "%d//%d %d//%d %d//%d", &verI[0], &norI[0],
-					&verI[1], &norI[1], &verI[2], &norI[2]);
-			}
-			else if (f_style == "8/8/8") {
-				vc = true, tc = true, nc = true;
-				sscanf_s(&line[2], "%d/%d/%d %d/%d/%d %d/%d/%d", &verI[0], &texI[0], &norI[0],
-					&verI[1], &texI[1], &norI[1], &verI[2], &texI[2], &norI[2]);
-			}
-			else if (f_style == "8/") {
-				vc = true;
-				sscanf_s(&line[2], "%d/ %d/ %d/", &verI[0], &verI[1], &verI[2]);
-			}
-			else if (f_style == "8/8") {
-				vc = true, tc = true;
-				sscanf_s(&line[2], "%d/%d %d/%d %d/%d", &verI[0], &texI[0],
-					&verI[1], &texI[1], &verI[2], &texI[2]);
-			}
-			else return false;
-
-			for (int i = 0; i < 3; i++) {
-				if (vc)V.pos = P[verI[i]];
-				if (tc)V.tex = T[texI[i]];
-				if (nc)V.nor = N[norI[i]];
-				obj.objData.vertices.push_back(V);
-			}
-		}
-	}
-	obj.objData.verIndices.resize(obj.objData.vertices.size());
-	std::generate(obj.objData.verIndices.begin(), obj.objData.verIndices.end(),
-		[n = 0]() mutable { return n++; });
-	in.close();
-	InitBuffer(obj);
-	return true;
-}
 /*그리기 함수*/
 GLvoid drawObj(Obj& o) {
 	glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(o.world_M()));

@@ -1,6 +1,11 @@
 #pragma once
 #include"Header.h"
 
+#ifndef OBJ_H
+#define OBJ_H
+#endif // !OBJ_H
+
+
 typedef GLushort Index;
 struct Vertex {
 	glm::vec3 pos; // position
@@ -28,3 +33,5 @@ struct Obj {
 	void Set_Color(const glm::vec4& color);
 	void Reverse_nor();
 };
+
+bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]);

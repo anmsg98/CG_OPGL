@@ -27,15 +27,27 @@
     <ClInclude Include="Obj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="shader_sunkue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="texture_sunkue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PROJECT.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Obj.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shader_sunkue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="texture_sunkue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
