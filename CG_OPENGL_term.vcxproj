@@ -19,12 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="debug.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="light.h" />
+    <ClInclude Include="Obj.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="light.cpp" />
+    <ClCompile Include="Obj.cpp" />
     <ClCompile Include="PROJECT.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

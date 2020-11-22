@@ -1,4 +1,8 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include"Header.h"
+#include"light.h"
+#include"Obj.h"
+#include"stb_image.h"
 /*
 	sun : space 
 	camera : 1 2 3
@@ -34,43 +38,6 @@ GLuint light_numLoc;
 GLuint shaderID;
 
 /* structs */
-typedef GLushort Index;
-struct Vertex {
-	glm::vec3 pos; // position
-	glm::vec4 col{ 1.0f,1.0f,1.0f,1.0f }; // color
-	glm::vec2 tex; // texCoord
-	glm::vec3 nor; // normal
-};
-struct ObjData {
-	GLuint VAO{0};
-	GLint shine{ 16 };
-	std::vector<Vertex> vertices;
-	std::vector<Index> verIndices;
-	void DelObjData() { glDeleteVertexArrays(1, &this->VAO); vertices.clear(); verIndices.clear(); }
-};
-struct Obj {
-	ObjData objData;
-	GLint use_texture{ false };
-	GLuint texture;
-	GLenum drawmode{ GLU_FILL };
-	GLenum shape{ GL_TRIANGLES };
-	std::vector<glm::mat4> M;
-	glm::mat4 world_M() {
-		glm::mat4 WM(1.0f);
-		std::for_each(this->M.begin(), this->M.end(), [&WM](glm::mat4& m) { WM *= m; });
-		//M0*M1*M2 TRS
-		return WM;
-
-	}
-	void DelObj() { if (use_texture)glDeleteTextures(1, &this->texture), use_texture = false; objData.DelObjData(); }
-	void Set_Alpha(const GLfloat alpha);
-	void Set_Color(const glm::vec4& color);
-	void Reverse_nor() {
-		for (std::vector<Vertex>::iterator i{ this->objData.vertices.begin() }, e{ this->objData.vertices.end() }; i != e; i++) {
-			i->nor = -i->nor;
-		}
-	}
-};
 struct CAMERA {
 	glm::vec3 EYE{ 0.0f,0.0f,1000.0f };
 	glm::vec3 AT{ 0.0f,0.0f,0.0f };
@@ -92,51 +59,6 @@ struct SCREEN {
 	GLfloat aspect() { return width / height; }
 	glm::mat4 proj_M() { return glm::perspective(glm::radians(this->fovy), this->aspect(), this->n, this->f); }
 }screen;
-
-struct LIGHT {
-	static GLfloat ambient;
-	static GLuint light_num;
-	static std::vector<LIGHT*> lights;
-	static GLfloat lights_pos[MAX_LIGHTS * 3];
-	static GLfloat lights_col[MAX_LIGHTS * 3];
-	static glm::vec3 ambientColor;
-	Obj obj;
-	glm::vec3 spec{ 0.0f,0.0f,0.0f };
-	glm::vec3 pos{ 0.0,0.0,0.0 };
-	glm::vec3 col{ 1.0,1.0,1.0 };
-
-	bool on() {
-		if (MAX_LIGHTS <= lights.size()) { std::cout << "check"; return false; };
-		light_num += 1;
-		lights.push_back(this);
-		return true;
-	}
-	void off() {
-		std::vector<LIGHT*>::iterator i = std::remove(lights.begin(), lights.end(), this);
-		if (i == lights.end())return;
-		else {
-			light_num -= 1;
-			lights.erase(std::remove(lights.begin(), lights.end(), this), lights.end());
-		}
-	}
-	static void init_light_buffer() {
-		for (int i = 0; i < light_num; i++) {
-			if (lights[i] == nullptr)continue;
-			lights_pos[i * 3] = lights[i]->pos.x;
-			lights_pos[i * 3 + 1] = lights[i]->pos.y;
-			lights_pos[i * 3 + 2] = lights[i]->pos.z;
-			lights_col[i * 3] = lights[i]->col.r;
-			lights_col[i * 3 + 1] = lights[i]->col.g;
-			lights_col[i * 3 + 2] = lights[i]->col.b;
-		}
-	}
-};
-GLfloat LIGHT::ambient = 0.7f;
-GLuint LIGHT::light_num = 0;
-std::vector<LIGHT*> LIGHT::lights;
-GLfloat LIGHT::lights_pos[MAX_LIGHTS * 3]{ 0.0f };
-GLfloat LIGHT::lights_col[MAX_LIGHTS * 3]{ 0.0f };
-glm::vec3 LIGHT::ambientColor{ 1.0,1.0,1.0 };
 
 /*Funcs*/
 GLchar* ReadSource(const GLchar file[]);
@@ -175,7 +97,6 @@ void Obj::Set_Color(const glm::vec4& color) {
 	}
 	InitBuffer(*this);
 }
-
 
 /*user data*/
 struct PLANE {
