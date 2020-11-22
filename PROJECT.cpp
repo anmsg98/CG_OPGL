@@ -1,20 +1,6 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<math.h>
-#include<string>
-#include<time.h>
-#include<gl/glew.h>
-#include<algorithm>
-#include<gl/freeglut.h>
-#include<gl/freeglut_ext.h>
-#include<gl/glm/glm/glm.hpp>
-#include<gl/glm/glm/ext.hpp>
-#include<gl/glm/glm/gtc/matrix_transform.hpp>
-#include"stb_image.h"
+#include"Header.h"
 /*
-	light : space 
+	sun : space 
 	camera : 1 2 3
 	speed w s
 	rotate a d 8(up) 4(left) 5(down) 6(right) 
@@ -23,8 +9,12 @@
 	building tap
 */
 constexpr glm::mat4 df(1.0f);
-constexpr float ground_floor{-60.0f};
+constexpr float ground_floor{ -60.0f };
+constexpr int buildingnum{ 50 };
+constexpr GLfloat groundsize{ 10000.0f };
+//constexpr int MAX_LIGHTS{ 8 };
 /* uniform */
+
 
 GLuint worldLoc;
 GLuint viewLoc;
@@ -34,9 +24,11 @@ GLuint lightPosLoc;
 GLuint viewPosLoc;
 GLuint shineLoc;
 GLuint ambientLoc;
+GLuint ambientColorLoc;
 GLuint specLoc;
 GLuint texLoc;
 GLuint use_texLoc;
+GLuint light_numLoc;
 
 /*  */
 GLuint shaderID;
@@ -100,15 +92,51 @@ struct SCREEN {
 	GLfloat aspect() { return width / height; }
 	glm::mat4 proj_M() { return glm::perspective(glm::radians(this->fovy), this->aspect(), this->n, this->f); }
 }screen;
+
 struct LIGHT {
+	static GLfloat ambient;
+	static GLuint light_num;
+	static std::vector<LIGHT*> lights;
+	static GLfloat lights_pos[MAX_LIGHTS * 3];
+	static GLfloat lights_col[MAX_LIGHTS * 3];
+	static glm::vec3 ambientColor;
 	Obj obj;
-	GLfloat ambient{ 0.7f };
 	glm::vec3 spec{ 0.0f,0.0f,0.0f };
-	glm::vec3 pos{ 500.0,250.0,0.0 };
+	glm::vec3 pos{ 0.0,0.0,0.0 };
 	glm::vec3 col{ 1.0,1.0,1.0 };
-}light;
 
-
+	bool on() {
+		if (MAX_LIGHTS <= lights.size()) { std::cout << "check"; return false; };
+		light_num += 1;
+		lights.push_back(this);
+		return true;
+	}
+	void off() {
+		std::vector<LIGHT*>::iterator i = std::remove(lights.begin(), lights.end(), this);
+		if (i == lights.end())return;
+		else {
+			light_num -= 1;
+			lights.erase(std::remove(lights.begin(), lights.end(), this), lights.end());
+		}
+	}
+	static void init_light_buffer() {
+		for (int i = 0; i < light_num; i++) {
+			if (lights[i] == nullptr)continue;
+			lights_pos[i * 3] = lights[i]->pos.x;
+			lights_pos[i * 3 + 1] = lights[i]->pos.y;
+			lights_pos[i * 3 + 2] = lights[i]->pos.z;
+			lights_col[i * 3] = lights[i]->col.r;
+			lights_col[i * 3 + 1] = lights[i]->col.g;
+			lights_col[i * 3 + 2] = lights[i]->col.b;
+		}
+	}
+};
+GLfloat LIGHT::ambient = 0.7f;
+GLuint LIGHT::light_num = 0;
+std::vector<LIGHT*> LIGHT::lights;
+GLfloat LIGHT::lights_pos[MAX_LIGHTS * 3]{ 0.0f };
+GLfloat LIGHT::lights_col[MAX_LIGHTS * 3]{ 0.0f };
+glm::vec3 LIGHT::ambientColor{ 1.0,1.0,1.0 };
 
 /*Funcs*/
 GLchar* ReadSource(const GLchar file[]);
@@ -152,45 +180,24 @@ void Obj::Set_Color(const glm::vec4& color) {
 /*user data*/
 struct PLANE {
 	Obj obj;
-	glm::vec3 pos{ 0.0,0.0,0.0 };
+	glm::vec3 pos{ 0.0,-100.0,0.0 };
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
 	glm::vec3 up{ 0.0,1.0,0.0 };
 
 	size_t eye_mode = 0;
-	int mode{ 0 };
 	GLfloat speed{ 0.0f };
 	GLfloat maxspeed{ 20.0f };
 	void init() {
 		// 0 Trans	1 Yaw	2 Pitch	3 Roll	4 Size
 		this->obj.M.resize(3, df);
-		change_obj(mode);
-		//this->obj.M.at(2) = glm::scale(df, glm::vec3(0.06));
-		//this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
+		LoadObj("airplane.obj", this->obj, "8/8/8");
+		this->obj.M.at(2) = glm::scale(df, glm::vec3(0.25f));
+		this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
 		this->setPos();
 		this->default_color();
 	}
 
-	void change_obj(int mode) {
-		switch(mode) {
-		case 0: {
-			obj.DelObj();
-			LoadObj("airplane.txt", this->obj, "8/8/8");
-			this->obj.M.at(1) = glm::rotate(obj.M.at(1), glm::radians(180.0f), { 0.0,1.0,0.0 });
-			this->obj.M.at(2) = glm::scale(df, glm::vec3(0.06));
-			this->default_color();
-			break;
-		}
-		case 1: {
-			obj.DelObj();
-			LoadObj("Plane.txt", this->obj, "8/8");
-			this->obj.M.at(1) = glm::rotate(obj.M.at(1), glm::radians(180.0f), { 0.0,1.0,0.0 });
-			this->obj.M.at(2) = glm::scale(df, glm::vec3(0.02));
-			this->default_color();
-			break;
-		}
-		}
-	}
 
 	void default_color() {
 		this->obj.Set_Color({ 0.5,0.8,0.2,1.0 });
@@ -244,7 +251,7 @@ struct PLANE {
 	void check_area() {
 		/*바닥 체크*/
 		if (this->pos.y < ground_floor+15.0f) {
-			this->obj.Set_Color({ 1.0,0.2,0.2,1.0 });
+			//this->obj.Set_Color({ 1.0,0.2,0.2,1.0 });
 			this->pos.y = ground_floor+ 15.0f;
 		}
 	}
@@ -279,10 +286,11 @@ struct PLANE {
 	}
 }plane;
 
-constexpr int buildingnum{ 50 };
-constexpr GLfloat groundsize{ 1000.0f };
+
 Obj coordinate, world, ground, building[buildingnum];
-std::vector<Obj> snow;
+std::vector<Obj> rain;
+LIGHT sun, moon;
+std::vector<LIGHT> thunder, bullet;
 
 /*-----MAIN--*/
 int main(int argc, char** argv) {
@@ -330,7 +338,8 @@ int main(int argc, char** argv) {
 	specLoc = glGetUniformLocation(shaderID, "spec");
 	texLoc = glGetUniformLocation(shaderID, "texture");
 	use_texLoc = glGetUniformLocation(shaderID, "use_tex");
-
+	light_numLoc = glGetUniformLocation(shaderID, "light_num");
+	ambientColorLoc = glGetUniformLocation(shaderID, "ambientColor");
 	/*  */
 	set_flip_texture(true);
 	DefaultObj();
@@ -375,14 +384,25 @@ GLvoid DefaultObj() {
 	/*world*/
 	LoadObj("sphere.obj", world, "8/8/8");
 	LoadTexture(world, "skydome.jpg", 2048, 1024, 3);
-	world.M.push_back(glm::scale(df, screen.size_of_world));
+	world.M.push_back(glm::scale(df, screen.size_of_world*100.0f));
 	world.Reverse_nor();
 
 	/*light*/
-	LoadObj("sphere.obj", light.obj, "8/8/8");
-	light.obj.Set_Color({ 1.0, 0.5, 0.5, 1.0 });
-	light.obj.M.push_back(glm::translate(df, light.pos));
-	light.obj.M.push_back(glm::scale(df, { 0.8f,0.8f,0.8f }));
+	LoadObj("sphere.obj", sun.obj, "8/8/8");
+	sun.obj.Set_Color({ 1.0, 0.2, 0.2, 1.0 });
+	sun.pos = { 500.0, 250.0, 0.0 };
+	sun.col = { 1.0,1.0,1.0 };
+	sun.obj.M.push_back(glm::translate(df, sun.pos));
+	sun.obj.M.push_back(glm::scale(df, { 0.8f,0.8f,0.8f }));
+	sun.on();
+	LoadObj("sphere.obj", moon.obj, "8/8/8");
+	moon.obj.Set_Color({ 0.2, 0.2, 1.0, 1.0 });
+	moon.pos = {-500.0,250.0,0.0};
+	moon.col = { 1.0,1.0,1.0 };
+	moon.obj.M.push_back(glm::translate(df, moon.pos));
+	moon.obj.M.push_back(glm::scale(df, { 0.8f,0.8f,0.8f }));
+	moon.on();
+
 	/*coord*/
 	{
 		Vertex V;
@@ -417,11 +437,11 @@ GLvoid MakeShape() {
 	plane.init();
 	{
 		for (int i = 0; i < buildingnum; i++) {
-			LoadObj("cube.txt", building[i], "8/8/8");
+			LoadObj("apartment.obj", building[i], "8/8/8");
 			building[i].Set_Color({ 1.0f,1.0f,GLfloat(rand() % 10) / 10.0f,1.0f });
 			building[i].M.resize(2, df);
-			building[i].M.at(1) = glm::scale(df, { 6.0f,50.0f,6.0f });
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			building[i].M.at(1) = glm::scale(df, glm::vec3(1.0f));
+			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-50.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
@@ -587,7 +607,7 @@ bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int
 {
 
 	//width,height = 2^n
-	obj.Set_Color(glm::vec4(1.0f)); // --회색조
+	//obj.Set_Color(glm::vec4(1.0f)); // --회색조
 	char F[256];
 	strncpy_s(F, "res/", sizeof(F));
 	strncat_s(F, file, sizeof(F));
@@ -647,7 +667,7 @@ bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) {
 	std::vector<glm::vec3> P(1);
 	std::vector<glm::vec2> T(1);
 	std::vector<glm::vec3> N(1);
-
+	V.col = glm::vec4(1.0f);
 	glm::vec3 tv3;
 	glm::vec2 tv2;
 
@@ -711,10 +731,7 @@ bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) {
 			else return false;
 
 			for (int i = 0; i < 3; i++) {
-				if (vc) {
-					V.pos = P[verI[i]];
-					V.col = { rand() % 2 * 1.0f,rand() % 2 * 1.0f,rand() % 2 * 1.0f, 1.0f };
-				}
+				if (vc)V.pos = P[verI[i]];
 				if (tc)V.tex = T[texI[i]];
 				if (nc)V.nor = N[norI[i]];
 				obj.objData.vertices.push_back(V);
@@ -760,13 +777,19 @@ GLvoid drawScene() {
 	glUseProgram(shaderID);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera.view_M()));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(screen.proj_M()));
-	glUniform3f(lightPosLoc, light.pos.x, light.pos.y, light.pos.z);
-	glUniform3f(lightColLoc, light.col.x, light.col.y, light.col.z);
+	//glUniform3f(lightPosLoc, sun.pos.x, sun.pos.y, sun.pos.z);
+	//glUniform3f(lightColLoc, sun.col.x, sun.col.y, sun.col.z);
+	LIGHT::init_light_buffer();
+	glUniform3fv(lightPosLoc, LIGHT::light_num, LIGHT::lights_pos);
+	glUniform3fv(lightColLoc, LIGHT::light_num, LIGHT::lights_col);
+	glUniform3f(ambientColorLoc, LIGHT::ambientColor.r, LIGHT::ambientColor.g, LIGHT::ambientColor.b);
 	glUniform3f(viewPosLoc, camera.EYE.x, camera.EYE.y, camera.EYE.z);
-	glUniform1f(ambientLoc, light.ambient);
-	glUniform3f(specLoc, light.spec.r, light.spec.g, light.spec.b);
+	glUniform1f(ambientLoc, LIGHT::ambient);
+	glUniform3f(specLoc, sun.spec.r, sun.spec.g, sun.spec.b);
 	glUniform1i(texLoc, 0);
+	glUniform1i(light_numLoc, LIGHT::light_num);
 
+	//std::cout << light_num;
 	std::vector<Obj*> Alpha_objs;
 	/*그리기 시작*/
 	{
@@ -776,18 +799,19 @@ GLvoid drawScene() {
 		drawObj(plane.obj);
 
 		/*불투명*/
-		drawObj(light.obj);
+		drawObj(sun.obj);
+		drawObj(moon.obj);
 		drawObj(ground);
-		for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
+		for (std::vector<Obj>::iterator i{ rain.begin() }, e{ rain.end() }; i != e; i++) {
 			drawObj(*i);
+		}
+		for (int i = 0; i < buildingnum; i++) {
+			drawObj(building[i]);
 		}
 	}
 	/*alpha*/
 	{
 		/*투명 ALpha_objs 로 push 하면 정렬한 후 드로우 함*/
-		for (int i = 0; i < buildingnum; i++) {
-			Alpha_objs.push_back(&building[i]);
-		}
 	}
 	/*그리기 끝*/
 	Sort_Alpha_blending(Alpha_objs);
@@ -848,10 +872,10 @@ GLvoid Timer(int value) {
 		}
 
 		if (P_go) {
-			plane.set_speed(0.005f);
+			plane.set_speed(0.05f);
 		}
 		if (P_stop) {
-			plane.set_speed(-0.01f);
+			plane.set_speed(-0.1f);
 		}
 		if (P_YL) {
 			plane.Yaw(degree/4);
@@ -873,8 +897,8 @@ GLvoid Timer(int value) {
 		}
 
 		
-			if (250 <= snow.size()) { snow.begin()->objData.DelObjData(); snow.erase(snow.begin()); }
-			for (std::vector<Obj>::iterator i{ snow.begin() }, e{ snow.end() }; i != e; i++) {
+			if (250 <= rain.size()) { rain.begin()->objData.DelObjData(); rain.erase(rain.begin()); }
+			for (std::vector<Obj>::iterator i{ rain.begin() }, e{ rain.end() }; i != e; i++) {
 				if ((i->world_M()* glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
 					i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
 				}
@@ -889,9 +913,9 @@ GLvoid Timer(int value) {
 		LoadObj("sphere.obj", o, "8/8/8");
 		o.Set_Color({ 1.0f,GLfloat(rand() % 10) / 10.0f,1.0f,1.0f });
 		o.M.push_back(glm::translate(glm::mat4(1.0f), { GLfloat(rand() % 200) - 100.0f,GLfloat(rand() % 20 + 80),GLfloat(rand() % 200) - 100.0f }));
-		o.M.push_back(glm::scale(df, glm::vec3(0.2f)));
+		o.M.push_back(glm::scale(df, {0.1,1.0,0.1}));
 		o.M.resize(3, df);
-		snow.push_back(o);
+		rain.push_back(o);
 
 		if (bl_snow)glutTimerFunc(100, Timer, value);
 		break;
@@ -937,7 +961,7 @@ GLvoid Mouse(int button, int state, int x, int y) {
 }
 GLvoid Motion(int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
-
+	
 	glutPostRedisplay();
 }
 GLvoid MouseWheel(int button, int dir, int x, int y) {
@@ -1017,11 +1041,6 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		right = true;
 		break;
 	}
-	case 'z': {
-		plane.mode = plane.mode == 0 ? 1 : 0;
-		plane.change_obj(plane.mode);
-		break;
-	}
 	case '0': {
 		if (!stealth) {
 			stealth = true;
@@ -1074,17 +1093,17 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		P_RR = true;
 		break;
 	}
-	case '5': {
+	case '8': {
 		P_PD = true;
 		break;
 	}
-	case '8': {
+	case '5': {
 		P_PU = true;
 		break;
 	}	
 	case ' ': {
-		if (light.ambient < 1.0f)light.ambient += 0.4f;
-		else light.ambient = 0.0f;
+		if (LIGHT::ambient < 1.0f)LIGHT::ambient += 0.4f;
+		else LIGHT::ambient = 0.0f;
 
 		break;
 	}
@@ -1146,11 +1165,11 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 		P_RR = false;
 		break;
 	}
-	case '5': {
+	case '8': {
 		P_PD = false;
 		break;
 	}
-	case '8': {
+	case '5': {
 		P_PU = false;
 		break;
 	}

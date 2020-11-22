@@ -30,3 +30,6 @@ https://m.blog.naver.com/PostView.nhn?blogId=jsjhahi&logNo=205951840&proxyRefere
 =======
 내일 질문할 것: glsl 내에서의 가변길이 배열 생성.. 광원 여러개를 이용하기 위함
 >>>>>>> sunghee
+
+
+소리

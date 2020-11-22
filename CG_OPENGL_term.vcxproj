@@ -20,6 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug.h" />
+    <ClInclude Include="Header.h" />
+    <ClInclude Include="light.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
