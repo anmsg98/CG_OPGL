@@ -41,9 +41,6 @@ struct SCREEN {
 }screen;
 
 /*Funcs*/
-void set_flip_texture(bool set);
-bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int numOfChannel);
-bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[] = "8");	//	f = "8/"
 GLvoid drawObj(Obj& o);
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
@@ -324,9 +321,6 @@ GLvoid MakeShape() {
 	}
 	/**/
 };
-
-/*데이터 로드 함수*/
-
 
 /*그리기 함수*/
 GLvoid drawObj(Obj& o) {
