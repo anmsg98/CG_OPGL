@@ -7,10 +7,8 @@
 #include"PLANE.h"
 #include"screen.h"
 #include"Alpha_blending.h"
-/*
-
-*/
-
+#define FLYING 1
+#define FPS 60
 /*Funcs*/
 GLvoid drawScene(GLvoid);
 /**/
@@ -30,7 +28,7 @@ GLvoid print_message();
 /**/
 
 
-Obj coordinate, world, ground, building[buildingnum], cloud[50];
+Obj coordinate, world, ground, building[buildingnum], cloud[100];
 std::vector<Obj> rain;
 LIGHT sun, moon;
 std::vector<LIGHT> thunder, bullet;
@@ -96,7 +94,7 @@ int main(int argc, char** argv) {
 	glutMouseWheelFunc(MouseWheel);
 
 	glutTimerFunc(50, Timer, 0);
-
+	glutTimerFunc(1200 / FPS, Timer, 1);
 	print_message();
 
 	glutMainLoop();
@@ -181,7 +179,7 @@ GLvoid MakeShape() {
 		}
 	}
 	{
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 100; i++) {
 			LoadObj("cloud.obj", cloud[i], "8/8/8");
 			cloud[i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
 			cloud[i].M.resize(3, df);
@@ -237,6 +235,8 @@ GLvoid drawScene() {
 		}
 		for (int i = 0; i < buildingnum; i++) {
 			drawObj(building[i]);
+		}
+		for (int i = 0; i < 100; i++) {
 			drawObj(cloud[i]);
 		}
 	}
@@ -279,6 +279,33 @@ GLvoid Timer(int value) {
 		}
 		else moon.off();
 
+		if (stealth) {
+			constexpr int tm{ 50 };
+			constexpr int tm2{ 25 };
+			static int time{ tm };
+			if(tm2<time)plane.Stealth(true);
+			else if(time%2) {
+				plane.Stealth(true);
+			}
+			else {
+				plane.Stealth(false);
+			}
+			time--;
+			if (time < 0)stealth = false, time = tm;
+		}
+		
+			if (250 <= rain.size()) { rain.begin()->objData.DelObjData(); rain.erase(rain.begin()); }
+			for (std::vector<Obj>::iterator i{ rain.begin() }, e{ rain.end() }; i != e; i++) {
+				if ((i->world_M()* glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
+					i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
+				}
+				else i->M.at(0) = glm::translate(i->M.at(0), { 0.0,-1.0,0.0 });
+			}
+		
+		glutTimerFunc(50, Timer, value);
+		break;
+	}
+	case 1: {
 		bool camera_mode = false;
 		if (up) {
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
@@ -302,23 +329,6 @@ GLvoid Timer(int value) {
 		}
 
 		plane.update(camera_mode);
-		// P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD
-
-		if (stealth) {
-			constexpr int tm{ 50 };
-			constexpr int tm2{ 25 };
-			static int time{ tm };
-			if(tm2<time)plane.Stealth(true);
-			else if(time%2) {
-				plane.Stealth(true);
-			}
-			else {
-				plane.Stealth(false);
-			}
-			time--;
-			if (time < 0)stealth = false, time = tm;
-		}
-		
 		if (P_go) {
 			plane.set_speed(0.08f);
 		}
@@ -326,34 +336,24 @@ GLvoid Timer(int value) {
 			plane.set_speed(-0.1f);
 		}
 		if (P_YL) {
-			plane.Yaw(degree/4);
+			plane.Yaw(degree / (FPS / 6));
 		}
 		if (P_YR) {
-			plane.Yaw(-degree/4);
+			plane.Yaw(-degree / (FPS / 6));
 		}
 		if (P_RL) {
-			plane.Roll(degree);
+			plane.Roll(degree/ (FPS / 24));
 		}
 		if (P_RR) {
-			plane.Roll(-degree);
+			plane.Roll(-degree / (FPS / 24));
 		}
 		if (P_PU) {
-			plane.Pitch(degree/5);
+			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_PD) {
-			plane.Pitch(-degree/5);
+			plane.Pitch(-degree / (FPS / 4.8));
 		}
-
-		
-			if (250 <= rain.size()) { rain.begin()->objData.DelObjData(); rain.erase(rain.begin()); }
-			for (std::vector<Obj>::iterator i{ rain.begin() }, e{ rain.end() }; i != e; i++) {
-				if ((i->world_M()* glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
-					i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
-				}
-				else i->M.at(0) = glm::translate(i->M.at(0), { 0.0,-1.0,0.0 });
-			}
-		
-		glutTimerFunc(50, Timer, value);
+		glutTimerFunc(1200/FPS, Timer, value);
 		break;
 	}
 	case 241: {
