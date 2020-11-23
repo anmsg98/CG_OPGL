@@ -18,6 +18,34 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+<<<<<<< HEAD:termproject.vcxproj
+=======
+  <ItemGroup>
+    <ClInclude Include="Alpha_blending.h" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="Handle_evnts.h" />
+    <ClInclude Include="Header.h" />
+    <ClInclude Include="light.h" />
+    <ClInclude Include="Obj.h" />
+    <ClInclude Include="PLANE.h" />
+    <ClInclude Include="screen.h" />
+    <ClInclude Include="shader_sunkue.h" />
+    <ClInclude Include="stb_image.h" />
+    <ClInclude Include="texture_sunkue.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Alpha_blending.cpp" />
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="Handle_evnts.cpp" />
+    <ClCompile Include="light.cpp" />
+    <ClCompile Include="Obj.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PLANE.cpp" />
+    <ClCompile Include="screen.cpp" />
+    <ClCompile Include="shader_sunkue.cpp" />
+    <ClCompile Include="texture_sunkue.cpp" />
+  </ItemGroup>
+>>>>>>> 65f62ad82d2fb65f91636f1c4a37a8af9d3b3a93:CG_OPENGL_term.vcxproj
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
