@@ -23,5 +23,6 @@ struct LIGHT {
 
 	bool on();
 	void off();
+	void update();
 	static void init_light_buffer();
 };

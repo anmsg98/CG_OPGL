@@ -8,13 +8,7 @@
 #include"screen.h"
 #include"Alpha_blending.h"
 /*
-	ambient : space 
-	camera : 1 2 3
-	speed w s
-	rotate a d 8(up) 4(left) 5(down) 6(right) 
-	stealth 0
-	snow Q
-	building tap
+
 */
 
 /*Funcs*/
@@ -111,10 +105,11 @@ GLvoid print_message() {
 	std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";
 	std::cout <<
 		"\
-		light[space]\n\
-		plane[w a s d 0 up(8) down(5) left(4) right(6)]\n\
-		camera[1 2 3]\n\
-		snow[q]\n\
+		light[space(제거예정)]\n\
+		plane[w a s d up(8) down(5) left(4) right(6)]\n\
+		rebuilding[tab]\n\
+		camera[i j k l]\n\
+		snow[q(제거예정)]\n\
 		";
 	std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";
 }
@@ -127,19 +122,21 @@ GLvoid DefaultObj() {
 
 	/*light*/
 	LoadObj("sphere.obj", sun.obj, "8/8/8");
-	sun.obj.Set_Color({ 1.0, 0.2, 0.2, 1.0 });
-	sun.pos = { 500.0, 250.0, 0.0 };
-	sun.col = { 1.0,1.0,1.0 };
-	sun.obj.M.push_back(glm::translate(df, sun.pos));
-	sun.obj.M.push_back(glm::scale(df, { 0.8f,0.8f,0.8f }));
-	sun.on();
+	sun.obj.Set_Color({ 10.0, 5.0, 5.0, 1.0 });
+	sun.pos = { groundsize, 0.0, 0.0 };
+	sun.col = { 100.0,100.0,100.0 };
+	sun.obj.M.resize(2, df);
+	sun.obj.M.push_back(glm::scale(df, glm::vec3(80.0f)));
+
+
+
 	LoadObj("sphere.obj", moon.obj, "8/8/8");
-	moon.obj.Set_Color({ 0.2, 0.2, 1.0, 1.0 });
-	moon.pos = {-500.0,250.0,0.0};
-	moon.col = { 1.0,1.0,1.0 };
-	moon.obj.M.push_back(glm::translate(df, moon.pos));
-	moon.obj.M.push_back(glm::scale(df, { 0.8f,0.8f,0.8f }));
-	moon.on();
+	moon.obj.Set_Color({ 1.0, 1.0, 10.0, 1.0 });
+	moon.pos = { -groundsize, 0.0, 0.0 };
+	moon.col = { 0.5,0.5,100.0 };
+	moon.obj.M.resize(2, df);
+	moon.obj.M.push_back(glm::scale(df, glm::vec3(40.0f)));
+
 
 	/*coord*/
 	{
@@ -178,9 +175,9 @@ GLvoid MakeShape() {
 			LoadObj("apartment.obj", building[i], "8/8/8");
 			building[i].Set_Color({ 0.5f,0.5f,GLfloat(rand() % 10) / 10.0f,1.0f });
 			building[i].M.resize(3, df);
-			building[i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			building[i].M.at(2) = glm::scale(df, glm::vec3(10.0f));
 			building[i].M.at(1) = glm::rotate(df,glm::radians(GLfloat(rand()%360)), {0.0,1.0,0.0});
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-50.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,ground_floor,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
@@ -242,6 +239,8 @@ GLvoid drawScene() {
 	glutSwapBuffers();
 }
 
+
+
 /*이벤트 함수*/
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, bl_snow,stealth;
 bool up, down, left, right;
@@ -249,34 +248,49 @@ GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	switch (value)
 	{
-	case 0: {		
-		bool s = false;
+	case 0: {	
+		constexpr GLfloat light_degree{ -1.0f };
+		sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
+		sun.update();
+		if (ground_floor < sun.pos.y) {
+			GLfloat d = sun.pos.y / groundsize;
+			LIGHT::ambient = d;
+			LIGHT::ambientColor = {1.0,d,1.0};
+			sun.on();
+		}
+		else sun.off();
+		moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
+		moon.update();
+		if (ground_floor < moon.pos.y) {
+			LIGHT::ambient = 0.3f;
+			LIGHT::ambientColor = {0.2,0.2,1.0};
+			moon.on();
+		}
+		else moon.off();
+
+		bool camera_mode = false;
 		if (up) {
-			s = true;
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
-			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (down) {
-			s = true;
 			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Right());
-			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (right) {
-			s = true;
 			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Up());
-			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (left) {
-			s = true;
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Up());
-			camera.EYE = glm::vec3(R * glm::vec4(camera.EYE, 1.0f));
+			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 
-		plane.update(s);
+		plane.update(camera_mode);
 		// P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD
 
 		if (stealth) {
@@ -293,9 +307,9 @@ GLvoid Timer(int value) {
 			time--;
 			if (time < 0)stealth = false, time = tm;
 		}
-
+		
 		if (P_go) {
-			plane.set_speed(0.05f);
+			plane.set_speed(0.08f);
 		}
 		if (P_stop) {
 			plane.set_speed(-0.1f);
@@ -390,9 +404,11 @@ GLvoid Motion(int x, int y) {
 GLvoid MouseWheel(int button, int dir, int x, int y) {
 	if (dir > 0)
 	{
+		plane.view_dist_add(-10.0f);
 	}
 	else
 	{
+		plane.view_dist_add(10.0f);
 	}
 	glutPostRedisplay();
 }
@@ -477,15 +493,15 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		break;
 	}
 	case '1': {
-		plane.eye_mode = 0;
+
 		break;
 	}
 	case '2': {
-		plane.eye_mode = 1;
+
 		break;
 	}
 	case '3': {
-		plane.eye_mode = 2;
+
 		break;
 	}
 	case 'W':

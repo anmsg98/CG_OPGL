@@ -4,16 +4,22 @@
 #ifndef OBJ_H
 #include"Obj.h"
 #endif // !OBJ_H
+
 struct PLANE {
 	Obj obj;
-	glm::vec3 pos{ 0.0,-100.0,0.0 };
+	glm::vec3 pos{ 0.0,0.0,0.0 };
+	
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
 	glm::vec3 up{ 0.0,1.0,0.0 };
 
-	size_t eye_mode = 0;
+	glm::mat4 viewMat{ df };
+	GLfloat view_dist{ 100.0f };
+
 	GLfloat speed{ 0.0f };
 	GLfloat maxspeed{ 20.0f };
+	
+	
 	void init();
 
 
@@ -42,6 +48,13 @@ struct PLANE {
 	void setPos();
 
 	void view();
+
+	void view_dist_add(GLfloat dist);
+
+	bool check_coll(glm::vec3 a,glm::vec3 b) {
+		// x,y , z ≥Ù¿Ã
+		return false;
+	}
 
 	void update(bool s);
 };

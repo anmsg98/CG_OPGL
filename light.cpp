@@ -1,6 +1,6 @@
 #include"light.h"
 
-GLfloat LIGHT::ambient = 0.7f;
+GLfloat LIGHT::ambient = 0.2f;
 GLuint LIGHT::light_num = 0;
 std::vector<LIGHT*> LIGHT::lights;
 GLfloat LIGHT::lights_pos[MAX_LIGHTS * 3]{ 0.0f };
@@ -10,8 +10,10 @@ glm::vec3 LIGHT::ambientColor{ 1.0,1.0,1.0 };
 
 bool LIGHT::on() {
 	if (MAX_LIGHTS <= lights.size()) { std::cout << "check"; return false; };
-	light_num += 1;
-	lights.push_back(this);
+	if (find(lights.begin(), lights.end(), this) == lights.end()) {
+		light_num += 1;
+		lights.push_back(this);
+	}
 	return true;
 }
 void LIGHT::off() {
@@ -22,6 +24,11 @@ void LIGHT::off() {
 		lights.erase(std::remove(lights.begin(), lights.end(), this), lights.end());
 	}
 }
+
+void LIGHT::update() {
+	this->obj.M.at(0) = glm::translate(df, this->pos);
+}
+
 void LIGHT::init_light_buffer() {
 	for (int i = 0; i < light_num; i++) {
 		if (lights[i] == nullptr)continue;
