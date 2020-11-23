@@ -97,21 +97,21 @@ int main(int argc, char** argv) {
 
 	glutTimerFunc(50, Timer, 0);
 
-	glutMainLoop();
-
 	print_message();
+
+	glutMainLoop();
 }
 GLvoid print_message() {
-	std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";
 	std::cout <<
 		"\
+		-= -= -= -= -= -= -= -= -= -= -= -= -= -= -\n\
 		light[space(제거예정)]\n\
 		plane[w a s d up(8) down(5) left(4) right(6)]\n\
 		rebuilding[tab]\n\
-		camera[i j k l]\n\
+		camera[i j k l  mouse_wheel]\n\
 		snow[q(제거예정)]\n\
+		=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\
 		";
-	std::cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";
 }
 GLvoid DefaultObj() {
 	/*world*/
