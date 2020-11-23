@@ -30,7 +30,7 @@ GLvoid print_message();
 /**/
 
 
-Obj coordinate, world, ground, building[buildingnum];
+Obj coordinate, world, ground, building[buildingnum], cloud[50];
 std::vector<Obj> rain;
 LIGHT sun, moon;
 std::vector<LIGHT> thunder, bullet;
@@ -181,6 +181,16 @@ GLvoid MakeShape() {
 		}
 	}
 	{
+		for (int i = 0; i < 50; i++) {
+			LoadObj("cloud.obj", cloud[i], "8/8/8");
+			cloud[i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
+			cloud[i].M.resize(3, df);
+			cloud[i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			cloud[i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			cloud[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor+2000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+		}
+	}
+	{
 		LoadObj("cube.txt", ground, "8/8/8");
 		LoadTexture(ground, "grass.jpg", 512, 512, 3);
 		ground.M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
@@ -227,6 +237,7 @@ GLvoid drawScene() {
 		}
 		for (int i = 0; i < buildingnum; i++) {
 			drawObj(building[i]);
+			drawObj(cloud[i]);
 		}
 	}
 	/*alpha*/
@@ -524,6 +535,12 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		P_YR = true;
 		break;
 	}
+	case'C':
+	case'c': {
+		plane.viewMat = df;
+		camera.UP = { 0.0 ,1.0, 0.0 };
+		break;
+	}
 	case '4': {
 		P_RL = true;
 		break;
@@ -591,6 +608,7 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 		P_YL = false;
 		break;
 	}
+	
 	case 'D':
 	case 'd': {
 		P_YR = false;
@@ -612,6 +630,7 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 		P_PU = false;
 		break;
 	}
+	
 	default:
 		break;
 	}
