@@ -1,2 +1,5 @@
 Debug/
 x64/
+CG_OPENGL_term/Debug/
+CG_OPENGL_term/x64/
+.vs/
