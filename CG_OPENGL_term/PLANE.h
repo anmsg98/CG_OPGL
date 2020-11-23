@@ -7,7 +7,7 @@
 
 struct PLANE {
 	Obj obj;
-	glm::vec3 pos{ 0.0,0.0,0.0 };
+	glm::vec3 pos{ 0.0,1000.0,0.0 };
 	
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
@@ -16,7 +16,7 @@ struct PLANE {
 	glm::mat4 viewMat{ df };
 	GLfloat view_dist{ 100.0f };
 
-	GLfloat speed{ 0.0f };
+	GLfloat speed{ 10.0f };
 	GLfloat maxspeed{ 20.0f };
 	
 	
