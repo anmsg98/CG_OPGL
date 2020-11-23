@@ -504,6 +504,12 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 
 		break;
 	}
+	case 'C':
+	case 'c': {
+		plane.viewMat = df;
+		camera.UP = { 0.0,1.0,0.0 };
+		break;
+	}
 	case 'W':
 	case 'w': {
 		P_go = true;
