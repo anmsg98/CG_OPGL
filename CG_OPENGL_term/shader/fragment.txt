@@ -10,6 +10,10 @@ out vec4 gl_FragColor;
 
 uniform vec3 lightColor[MAX_LIGHTS];
 uniform vec3 lightPos[MAX_LIGHTS];
+uniform int use_spot[MAX_LIGHTS];
+uniform float spot_cos[MAX_LIGHTS];
+uniform vec3 spot_dir[MAX_LIGHTS];
+
 uniform vec3 ambientColor;
 uniform vec3 viewPos;
 uniform float ambientLight;
@@ -19,27 +23,61 @@ uniform sampler2D texture1;
 uniform int use_tex;
 uniform int light_num;
 
+float attenuation(vec3 att_lightPos){
+	float constant = 1.0f;
+	float linear = 0.000007;
+	float quadratic = 0.00000002;
+	float dist =distance(fragPos,att_lightPos);
+	float under = constant + linear*dist + quadratic*dist*dist;
+	return 1.0/under;
+}
+
+float SpotLight(float s_cos,float f_cos){
+	if(s_cos < f_cos){
+		return 0.5f;
+	}
+	else return 0.0f;
+}
+
+
+
 void main(void)
 {	
+<<<<<<< HEAD
 	vec4 result = vec4(0.0,0.0,0.0,0.0);
+=======
+	vec3 result = vec3(0.0,0.0,0.0);
+>>>>>>> d58f21c07069de47fbff92dc90fe4391cf976189
 	vec3 ambient = clamp(ambientLight*ambientColor,0.0,1.0);
 	
+	vec3 normalVector = normalize(v_normal);
+	
+
 	for(int i=0;i<light_num;i++){
-		vec3 normalVector = normalize(v_normal);
 		vec3 lightDir = normalize(lightPos[i]-fragPos);
-		float diffuseLight = max(dot(normalVector,lightDir),0.0); 
-		vec3 diffuse = clamp(diffuseLight * lightColor[i],0.0,1.0);
 
-		vec3 viewDir = normalize(viewPos-fragPos);
-		vec3 reflectDir = reflect(-lightDir,normalVector);
-		float specularLight = max(dot(viewDir,reflectDir),0.0);
-		specularLight = pow(specularLight,shine);
-		vec3 specular = clamp(specularLight*lightColor[i],0.0,1.0);
+		if(use_spot[i]==1){
+			vec3 spotDir = normalize(-spot_dir[i]);
+			vec3 spot = clamp(SpotLight(spot_cos[i], dot(lightDir, spotDir)) * lightColor[i],0.0,1.0);
+			spot = spot * attenuation(lightPos[i]);
+			result = result + vec3(spot * v_color.rgb) * attenuation(lightPos[i]);
+		}
+		else{
+			float diffuseLight = max(dot(normalVector,lightDir),0.0); 
+			vec3 diffuse = clamp(diffuseLight * lightColor[i],0.0,1.0);
 
-		result = result + vec4((diffuse*v_color.rgb+specular*spec), v_color.a );
+			vec3 viewDir = normalize(viewPos-fragPos);
+			vec3 reflectDir = reflect(-lightDir,normalVector);
+
+			float specularLight = max(dot(viewDir,reflectDir),0.0);
+			specularLight = pow(specularLight,shine);
+			vec3 specular = clamp(specularLight*lightColor[i],0.0,1.0);
+
+			result = result + vec3(diffuse*v_color.rgb+specular*spec) * attenuation(lightPos[i]);
+		}
 	}
-	//result = result/light_num; 최대밝기 제한시 해제
-	result = result + vec4(ambient*v_color.rgb, v_color.a);
+	//result = result/light_num; //최대밝기 제한시 해제
+	result = result + ambient*v_color.rgb;
 	if(use_tex==1){result = texture(texture1, v_texCoord) * result;}
-	gl_FragColor = result;
+	gl_FragColor = vec4(result,v_color.a);
 }
