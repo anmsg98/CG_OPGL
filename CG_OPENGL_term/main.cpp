@@ -7,16 +7,12 @@
 #include"PLANE.h"
 #include"screen.h"
 #include"Alpha_blending.h"
-<<<<<<< HEAD
 #define FLYING 1
 #define FPS 60
-=======
 /*
 	빛 범위 제한..
 	sp, sh, -ndir 방향.
 */
-
->>>>>>> d58f21c07069de47fbff92dc90fe4391cf976189
 /*Funcs*/
 GLvoid drawScene(GLvoid);
 /**/
@@ -293,7 +289,6 @@ GLvoid Timer(int value) {
 			}
 			else moon.off();
 		}
-<<<<<<< HEAD
 		else moon.off();
 
 		if (stealth) {
@@ -323,26 +318,24 @@ GLvoid Timer(int value) {
 		break;
 	}
 	case 1: {
-=======
->>>>>>> d58f21c07069de47fbff92dc90fe4391cf976189
 		bool camera_mode = false;
 		if (up) {
-			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 12)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (down) {
-			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Right());
+			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 12)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (right) {
-			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Up());
+			glm::mat4 R = glm::rotate(df, glm::radians(degree / (FPS / 12)), camera.Up());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (left) {
-			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Up());
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 12)), camera.Up());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
@@ -560,12 +553,6 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	case 'D':
 	case 'd': {
 		P_YR = true;
-		break;
-	}
-	case'C':
-	case'c': {
-		plane.viewMat = df;
-		camera.UP = { 0.0 ,1.0, 0.0 };
 		break;
 	}
 	case '4': {

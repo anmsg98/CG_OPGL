@@ -11,11 +11,7 @@
 
 struct PLANE {
 	Obj obj;
-<<<<<<< HEAD
-	glm::vec3 pos{ 0.0,1000.0,0.0 };
-=======
-	glm::vec3 pos{ 0.0,50.0,0.0 };
->>>>>>> d58f21c07069de47fbff92dc90fe4391cf976189
+	glm::vec3 pos{ 0.0,2000.0,0.0 };
 	
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
