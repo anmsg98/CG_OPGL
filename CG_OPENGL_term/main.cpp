@@ -8,7 +8,8 @@
 #include"screen.h"
 #include"Alpha_blending.h"
 /*
-
+	빛 범위 제한..
+	sp, sh, -ndir 방향.
 */
 
 /*Funcs*/
@@ -105,7 +106,8 @@ GLvoid print_message() {
 	std::cout <<
 		"\
 		-= -= -= -= -= -= -= -= -= -= -= -= -= -= -\n\
-		light[space(제거예정)]\n\
+		time_stop[space]\n\
+		head_light [ 1 2 3 ]\n\
 		plane[w a s d up(8) down(5) left(4) right(6)]\n\
 		rebuilding[tab]\n\
 		camera[i j k l  mouse_wheel]\n\
@@ -197,11 +199,13 @@ GLvoid drawScene() {
 	glUseProgram(shaderID);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera.view_M()));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(screen.proj_M()));
-	//glUniform3f(lightPosLoc, sun.pos.x, sun.pos.y, sun.pos.z);
-	//glUniform3f(lightColLoc, sun.col.x, sun.col.y, sun.col.z);
 	LIGHT::init_light_buffer();
 	glUniform3fv(lightPosLoc, LIGHT::light_num, LIGHT::lights_pos);
 	glUniform3fv(lightColLoc, LIGHT::light_num, LIGHT::lights_col);
+	glUniform1iv(use_spotLoc, LIGHT::light_num, LIGHT::lights_use_spot);
+	glUniform1fv(spot_cosLoc, LIGHT::light_num, LIGHT::lights_spot_cos);
+	glUniform3fv(spot_dirLoc, LIGHT::light_num, LIGHT::lights_spot_dir);
+
 	glUniform3f(ambientColorLoc, LIGHT::ambientColor.r, LIGHT::ambientColor.g, LIGHT::ambientColor.b);
 	glUniform3f(viewPosLoc, camera.EYE.x, camera.EYE.y, camera.EYE.z);
 	glUniform1f(ambientLoc, LIGHT::ambient);
@@ -242,32 +246,35 @@ GLvoid drawScene() {
 
 
 /*이벤트 함수*/
-bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, bl_snow,stealth;
+bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, bl_snow, stealth, timeStop;
 bool up, down, left, right;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	switch (value)
 	{
 	case 0: {	
-		constexpr GLfloat light_degree{ -1.0f };
-		sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
-		sun.update();
-		if (ground_floor < sun.pos.y) {
-			GLfloat d = sun.pos.y / groundsize;
-			LIGHT::ambient = d;
-			LIGHT::ambientColor = {1.0,d,1.0};
-			sun.on();
-		}
-		else sun.off();
-		moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
-		moon.update();
-		if (ground_floor < moon.pos.y) {
-			LIGHT::ambient = 0.3f;
-			LIGHT::ambientColor = {0.2,0.2,1.0};
-			moon.on();
-		}
-		else moon.off();
+		// std::cout << LIGHT::light_num << 'n' << LIGHT::lights.size() << ' ';
 
+		if (timeStop == false) {
+			constexpr GLfloat light_degree{ -1.0f };
+			sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
+			sun.update();
+			if (ground_floor < sun.pos.y) {
+				GLfloat d = sun.pos.y / groundsize;
+				LIGHT::ambient = d;
+				LIGHT::ambientColor = { 1.0,d,1.0 };
+				sun.on();
+			}
+			else sun.off();
+			moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
+			moon.update();
+			if (ground_floor < moon.pos.y) {
+				LIGHT::ambient = 0.3f;
+				LIGHT::ambientColor = { 0.2,0.2,1.0 };
+				moon.on();
+			}
+			else moon.off();
+		}
 		bool camera_mode = false;
 		if (up) {
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
@@ -493,15 +500,17 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		break;
 	}
 	case '1': {
-
+		plane.HeadLightOnOff();
 		break;
 	}
 	case '2': {
-
+		plane.head_light.spot_theta = 5.0f;
+		plane.head_light.col = glm::vec3(1.0f);
 		break;
 	}
 	case '3': {
-
+		plane.head_light.spot_theta = 2.0f;
+		plane.head_light.col = glm::vec3(2.0f);
 		break;
 	}
 	case 'C':
@@ -547,8 +556,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		break;
 	}	
 	case ' ': {
-		if (LIGHT::ambient < 1.0f)LIGHT::ambient += 0.4f;
-		else LIGHT::ambient = 0.0f;
+		timeStop = timeStop ? false : true;
 
 		break;
 	}

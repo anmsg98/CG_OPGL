@@ -5,8 +5,6 @@ GLuint shaderID;
 GLuint worldLoc;
 GLuint viewLoc;
 GLuint projLoc;
-GLuint lightColLoc;
-GLuint lightPosLoc;
 GLuint viewPosLoc;
 GLuint shineLoc;
 GLuint ambientLoc;
@@ -16,13 +14,20 @@ GLuint texLoc;
 GLuint use_texLoc;
 GLuint light_numLoc;
 
+
+//array
+GLuint lightColLoc;
+GLuint lightPosLoc;
+GLuint use_spotLoc;
+GLuint spot_cosLoc;
+GLuint spot_dirLoc;
+
+
 GLvoid init_uniform_Loc()
 {
 	worldLoc = glGetUniformLocation(shaderID, "worldMat");
 	viewLoc = glGetUniformLocation(shaderID, "viewMat");
 	projLoc = glGetUniformLocation(shaderID, "projMat");
-	lightColLoc = glGetUniformLocation(shaderID, "lightColor");
-	lightPosLoc = glGetUniformLocation(shaderID, "lightPos");
 	viewPosLoc = glGetUniformLocation(shaderID, "viewPos");
 	shineLoc = glGetUniformLocation(shaderID, "shine");
 	ambientLoc = glGetUniformLocation(shaderID, "ambientLight");
@@ -31,6 +36,13 @@ GLvoid init_uniform_Loc()
 	use_texLoc = glGetUniformLocation(shaderID, "use_tex");
 	light_numLoc = glGetUniformLocation(shaderID, "light_num");
 	ambientColorLoc = glGetUniformLocation(shaderID, "ambientColor");
+	
+	//array
+	use_spotLoc = glGetUniformLocation(shaderID, "use_spot");
+	spot_cosLoc = glGetUniformLocation(shaderID, "spot_cos");
+	spot_dirLoc = glGetUniformLocation(shaderID, "spot_dir");
+	lightColLoc = glGetUniformLocation(shaderID, "lightColor");
+	lightPosLoc = glGetUniformLocation(shaderID, "lightPos");
 }
 GLchar* ReadSource(const GLchar file[])
 {

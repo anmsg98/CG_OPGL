@@ -4,6 +4,10 @@
 #ifndef OBJ_H
 #include"Obj.h"
 #endif // !OBJ_H
+#ifndef LIGHT_H
+#define LIGHT_H
+#include"light.h"
+#endif // !LIGHT_H
 
 struct PLANE {
 	Obj obj;
@@ -18,7 +22,9 @@ struct PLANE {
 
 	GLfloat speed{ 0.0f };
 	GLfloat maxspeed{ 20.0f };
-	
+
+
+	LIGHT head_light;
 	
 	void init();
 
@@ -56,6 +62,8 @@ struct PLANE {
 		return false;
 	}
 
+	void HeadLightOnOff();
+	void update_head_light();
 	void update(bool s);
 };
 extern PLANE plane;

@@ -9,8 +9,6 @@ extern GLuint shaderID;
 extern GLuint worldLoc;
 extern GLuint viewLoc;
 extern GLuint projLoc;
-extern GLuint lightColLoc;
-extern GLuint lightPosLoc;
 extern GLuint viewPosLoc;
 extern GLuint shineLoc;
 extern GLuint ambientLoc;
@@ -19,6 +17,14 @@ extern GLuint specLoc;
 extern GLuint texLoc;
 extern GLuint use_texLoc;
 extern GLuint light_numLoc;
+
+//array
+extern GLuint lightColLoc;
+extern GLuint lightPosLoc;
+extern GLuint use_spotLoc;
+extern GLuint spot_cosLoc;
+extern GLuint spot_dirLoc;
+
 
 GLvoid init_uniform_Loc();
 GLchar* ReadSource(const GLchar file[]);

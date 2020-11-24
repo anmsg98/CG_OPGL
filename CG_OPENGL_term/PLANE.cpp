@@ -10,6 +10,8 @@ void PLANE::init() {
 	this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
 	this->setPos();
 	this->default_color();
+	this->head_light.col = { 1.0,1.0,1.0 };
+	this->head_light.use_spot = true;
 }
 
 
@@ -88,11 +90,21 @@ void PLANE::view_dist_add(GLfloat dist) {
 	if (400.0f < view_dist)view_dist = 400.0f;
 }
 
+void PLANE::HeadLightOnOff() { this->head_light.on_off(); };
+
+
+void PLANE::update_head_light(){
+	this->head_light.pos = glm::translate(df, this->nDir() * -10.0f) * glm::vec4(this->pos, 1.0);
+	this->head_light.spot_dir = this->nDir() * -100.0f;
+}
+
+
 void PLANE::update(bool s) {
 	if (!s)this->view();
 	this->set_speed(-0.03f);
 	this->go();
 	this->setPos();
+	this->update_head_light();
 }
 
 
