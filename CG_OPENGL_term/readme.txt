@@ -23,3 +23,4 @@ https://m.blog.naver.com/PostView.nhn?blogId=jsjhahi&logNo=205951840&proxyRefere
 다음에 할일 : 충돌쳌, 번개, 비 ,소리
 
 소리
+git
