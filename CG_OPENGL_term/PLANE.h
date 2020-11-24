@@ -7,7 +7,7 @@
 
 struct PLANE {
 	Obj obj;
-	glm::vec3 pos{ 0.0,0.0,0.0 };
+	glm::vec3 pos{ 0.0,50.0,0.0 };
 	
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
