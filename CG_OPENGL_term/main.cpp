@@ -7,10 +7,9 @@
 #include"PLANE.h"
 #include"screen.h"
 #include"Alpha_blending.h"
-/*
-	빛 범위 제한..
-	sp, sh, -ndir 방향.
-*/
+
+#define FLYING 1
+#define FPS 60 
 
 /*Funcs*/
 GLvoid drawScene(GLvoid);
@@ -31,8 +30,7 @@ GLvoid print_message();
 /**/
 
 
-Obj coordinate, world, ground, building[buildingnum];
-std::vector<Obj> rain;
+Obj coordinate, world, ground, building[buildingnum], cloud[cloudnum];
 LIGHT sun, moon;
 std::vector<LIGHT> thunder, bullet;
 
@@ -97,6 +95,7 @@ int main(int argc, char** argv) {
 	glutMouseWheelFunc(MouseWheel);
 
 	glutTimerFunc(50, Timer, 0);
+	glutTimerFunc(12000 / FPS, Timer, 1);
 
 	print_message();
 
@@ -111,7 +110,6 @@ GLvoid print_message() {
 		plane[w a s d up(8) down(5) left(4) right(6)]\n\
 		rebuilding[tab]\n\
 		camera[i j k l  mouse_wheel]\n\
-		snow[q(제거예정)]\n\
 		=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\
 		";
 }
@@ -183,6 +181,16 @@ GLvoid MakeShape() {
 		}
 	}
 	{
+		for (int i = 0; i < cloudnum; i++) {
+			LoadObj("cloud.obj", cloud[i], "8/8/8");
+			cloud[i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
+			cloud[i].M.resize(3, df);
+			cloud[i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			cloud[i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			cloud[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+		}
+	}
+	{
 		LoadObj("cube.txt", ground, "8/8/8");
 		LoadTexture(ground, "grass.jpg", 512, 512, 3);
 		ground.M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
@@ -227,11 +235,11 @@ GLvoid drawScene() {
 		drawObj(sun.obj);
 		drawObj(moon.obj);
 		drawObj(ground);
-		for (std::vector<Obj>::iterator i{ rain.begin() }, e{ rain.end() }; i != e; i++) {
-			drawObj(*i);
-		}
 		for (int i = 0; i < buildingnum; i++) {
 			drawObj(building[i]);
+		}
+		for (int i = 0; i < cloudnum; i++) {
+			drawObj(cloud[i]);
 		}
 	}
 	/*alpha*/
@@ -253,9 +261,7 @@ GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	switch (value)
 	{
-	case 0: {	
-		// std::cout << LIGHT::light_num << 'n' << LIGHT::lights.size() << ' ';
-
+	case 0: {
 		if (timeStop == false) {
 			constexpr GLfloat light_degree{ -1.0f };
 			sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
@@ -276,6 +282,27 @@ GLvoid Timer(int value) {
 			}
 			else moon.off();
 		}
+		
+		if (stealth) {
+			constexpr int tm{ 50 };
+			constexpr int tm2{ 25 };
+			static int time{ tm };
+			if(tm2<time)plane.Stealth(true);
+			else if(time%2) {
+				plane.Stealth(true);
+			}
+			else {
+				plane.Stealth(false);
+			}
+			time--;
+			if (time < 0)stealth = false, time = tm;
+		}
+		
+		
+		glutTimerFunc(50, Timer, value);
+		break;
+	}
+	case 1: {
 		bool camera_mode = false;
 		if (up) {
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
@@ -299,23 +326,6 @@ GLvoid Timer(int value) {
 		}
 
 		plane.update(camera_mode);
-		// P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD
-
-		if (stealth) {
-			constexpr int tm{ 50 };
-			constexpr int tm2{ 25 };
-			static int time{ tm };
-			if(tm2<time)plane.Stealth(true);
-			else if(time%2) {
-				plane.Stealth(true);
-			}
-			else {
-				plane.Stealth(false);
-			}
-			time--;
-			if (time < 0)stealth = false, time = tm;
-		}
-		
 		if (P_go) {
 			plane.set_speed(0.08f);
 		}
@@ -323,46 +333,24 @@ GLvoid Timer(int value) {
 			plane.set_speed(-0.1f);
 		}
 		if (P_YL) {
-			plane.Yaw(degree/4);
+			plane.Yaw(degree / (FPS / 6));
 		}
 		if (P_YR) {
-			plane.Yaw(-degree/4);
+			plane.Yaw(-degree / (FPS / 6));
 		}
 		if (P_RL) {
-			plane.Roll(degree);
+			plane.Roll(degree / (FPS / 24));
 		}
 		if (P_RR) {
-			plane.Roll(-degree);
+			plane.Roll(-degree / (FPS / 24));
 		}
 		if (P_PU) {
-			plane.Pitch(degree/5);
+			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_PD) {
-			plane.Pitch(-degree/5);
+			plane.Pitch(-degree / (FPS / 4.8));
 		}
-
-		
-			if (250 <= rain.size()) { rain.begin()->objData.DelObjData(); rain.erase(rain.begin()); }
-			for (std::vector<Obj>::iterator i{ rain.begin() }, e{ rain.end() }; i != e; i++) {
-				if ((i->world_M()* glm::vec4{ i->objData.vertices.at(0).pos, 1.0f }).y <= -45.0f) {
-					i->M.at(2) = glm::scale(df, { 2.0,0.1,2.0 });
-				}
-				else i->M.at(0) = glm::translate(i->M.at(0), { 0.0,-1.0,0.0 });
-			}
-		
-		glutTimerFunc(50, Timer, value);
-		break;
-	}
-	case 241: {
-		Obj o;
-		LoadObj("sphere.obj", o, "8/8/8");
-		o.Set_Color({ 1.0f,GLfloat(rand() % 10) / 10.0f,1.0f,1.0f });
-		o.M.push_back(glm::translate(glm::mat4(1.0f), { GLfloat(rand() % 200) - 100.0f,GLfloat(rand() % 20 + 80),GLfloat(rand() % 200) - 100.0f }));
-		o.M.push_back(glm::scale(df, {0.1,1.0,0.1}));
-		o.M.resize(3, df);
-		rain.push_back(o);
-
-		if (bl_snow)glutTimerFunc(100, Timer, value);
+		glutTimerFunc(1200 / FPS, Timer, value);
 		break;
 	}
 	default: { break; }
@@ -559,12 +547,6 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	case ' ': {
 		timeStop = timeStop ? false : true;
 
-		break;
-	}
-	case 'Q':
-	case 'q': {
-		bl_snow = bl_snow ? false : true;
-		glutTimerFunc(50, Timer, 241);
 		break;
 	}
 	default: { break; }
