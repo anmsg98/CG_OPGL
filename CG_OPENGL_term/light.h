@@ -18,6 +18,7 @@ struct LIGHT {
 	static GLfloat lights_col[MAX_LIGHTS * 3];
 	static GLint lights_use_spot[MAX_LIGHTS];
 	static GLfloat lights_spot_cos[MAX_LIGHTS];
+	static GLfloat lights_spot_out_cos[MAX_LIGHTS];
 	static GLfloat lights_spot_dir[MAX_LIGHTS * 3];
 
 	Obj obj;
@@ -30,7 +31,7 @@ struct LIGHT {
 	GLfloat spot_theta{ 5.0f };
 	bool is_on{ false };
 
-	GLfloat spot_cos();
+	GLfloat spot_cos(int i);
 
 	bool on();
 	void off();

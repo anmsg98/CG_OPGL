@@ -204,6 +204,7 @@ GLvoid drawScene() {
 	glUniform3fv(lightColLoc, LIGHT::light_num, LIGHT::lights_col);
 	glUniform1iv(use_spotLoc, LIGHT::light_num, LIGHT::lights_use_spot);
 	glUniform1fv(spot_cosLoc, LIGHT::light_num, LIGHT::lights_spot_cos);
+	glUniform1fv(spot_out_cosLoc, LIGHT::light_num, LIGHT::lights_spot_out_cos);
 	glUniform3fv(spot_dirLoc, LIGHT::light_num, LIGHT::lights_spot_dir);
 
 	glUniform3f(ambientColorLoc, LIGHT::ambientColor.r, LIGHT::ambientColor.g, LIGHT::ambientColor.b);
@@ -504,12 +505,12 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		break;
 	}
 	case '2': {
-		plane.head_light.spot_theta = 5.0f;
+		plane.head_light.spot_theta = 2.5f;
 		plane.head_light.col = glm::vec3(1.0f);
 		break;
 	}
 	case '3': {
-		plane.head_light.spot_theta = 2.0f;
+		plane.head_light.spot_theta = 1.f;
 		plane.head_light.col = glm::vec3(2.0f);
 		break;
 	}

@@ -7,11 +7,12 @@ GLfloat LIGHT::lights_pos[MAX_LIGHTS * 3]{ 0.0f };
 GLfloat LIGHT::lights_col[MAX_LIGHTS * 3]{ 0.0f };
 GLint LIGHT::lights_use_spot[MAX_LIGHTS]{ 0 };
 GLfloat LIGHT::lights_spot_cos[MAX_LIGHTS]{ 2.0f };
+GLfloat LIGHT::lights_spot_out_cos[MAX_LIGHTS]{ 2.0f };
 GLfloat LIGHT::lights_spot_dir[MAX_LIGHTS * 3]{ 0.0f };
 glm::vec3 LIGHT::ambientColor{ 1.0,1.0,1.0 };
 
 
-GLfloat LIGHT::spot_cos() { if (this->use_spot)return glm::cos(glm::radians(this->spot_theta)); else return 2.0f;/*abs()<=1.0*/ }
+GLfloat LIGHT::spot_cos(int i) { float a = 1.0f + i * 0.8f; if (this->use_spot)return glm::cos(glm::radians(this->spot_theta*a)); else return 2.0f;/*abs()<=1.0*/ }
 
 bool LIGHT::on() {
 	if (MAX_LIGHTS <= lights.size()) { std::cout << "check"; return false; };
@@ -52,7 +53,8 @@ void LIGHT::init_light_buffer() {
 		lights_col[i * 3 + 1] = lights[i]->col.g;
 		lights_col[i * 3 + 2] = lights[i]->col.b;
 		lights_use_spot[i] = lights[i]->use_spot;
-		lights_spot_cos[i] = lights[i]->spot_cos();
+		lights_spot_cos[i] = lights[i]->spot_cos(0);
+		lights_spot_out_cos[i] = lights[i]->spot_cos(1);
 		lights_spot_dir[i * 3] = lights[i]->spot_dir.x;
 		lights_spot_dir[i * 3 + 1] = lights[i]->spot_dir.y;
 		lights_spot_dir[i * 3 + 2] = lights[i]->spot_dir.z;

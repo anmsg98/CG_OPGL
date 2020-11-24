@@ -20,6 +20,7 @@ GLuint lightColLoc;
 GLuint lightPosLoc;
 GLuint use_spotLoc;
 GLuint spot_cosLoc;
+GLuint spot_out_cosLoc;
 GLuint spot_dirLoc;
 
 
@@ -40,6 +41,7 @@ GLvoid init_uniform_Loc()
 	//array
 	use_spotLoc = glGetUniformLocation(shaderID, "use_spot");
 	spot_cosLoc = glGetUniformLocation(shaderID, "spot_cos");
+	spot_out_cosLoc = glGetUniformLocation(shaderID, "spot_out_cos");
 	spot_dirLoc = glGetUniformLocation(shaderID, "spot_dir");
 	lightColLoc = glGetUniformLocation(shaderID, "lightColor");
 	lightPosLoc = glGetUniformLocation(shaderID, "lightPos");

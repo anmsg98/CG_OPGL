@@ -10,9 +10,9 @@
 #include<algorithm>
 #include<gl/freeglut.h>
 #include<gl/freeglut_ext.h>
-#include<gl/glm/glm/glm.hpp>
-#include<gl/glm/glm/ext.hpp>
-#include<gl/glm/glm/gtc/matrix_transform.hpp>
+#include<gl/glm/glm.hpp>
+#include<gl/glm/ext.hpp>
+#include<gl/glm/gtc/matrix_transform.hpp>
 
 #ifndef HEADER_H
 #define HEADER_H

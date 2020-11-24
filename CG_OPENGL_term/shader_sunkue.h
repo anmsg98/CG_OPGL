@@ -23,6 +23,7 @@ extern GLuint lightColLoc;
 extern GLuint lightPosLoc;
 extern GLuint use_spotLoc;
 extern GLuint spot_cosLoc;
+extern GLuint spot_out_cosLoc;
 extern GLuint spot_dirLoc;
 
 
