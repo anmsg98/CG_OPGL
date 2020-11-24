@@ -305,22 +305,22 @@ GLvoid Timer(int value) {
 	case 1: {
 		bool camera_mode = false;
 		if (up) {
-			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Right());
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS/6)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (down) {
-			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Right());
+			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 6)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (right) {
-			glm::mat4 R = glm::rotate(df, glm::radians(degree), camera.Up());
+			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 6)), camera.Up());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (left) {
-			glm::mat4 R = glm::rotate(df, glm::radians(-degree), camera.Up());
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS / 6)), camera.Up());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
