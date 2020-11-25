@@ -3,7 +3,7 @@
 
 
 struct SCREEN {
-	GLfloat fovy{ 30.0f }; //glm::Radians(fovy)
+	GLfloat fovy{ 60.0f }; //glm::Radians(fovy)
 	GLsizei width{ 800 };	//W/H
 	GLsizei height{ 600 };	//W/H
 	GLfloat n{ 0.1f };

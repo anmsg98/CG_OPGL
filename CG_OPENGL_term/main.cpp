@@ -199,6 +199,17 @@ GLvoid MakeShape() {
 	/**/
 };
 
+
+bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
+	// 속도떔시 대충 만든 코드, 부정확하지만 일단 사용.
+	glm::vec3 pivot = obj.objData.vertices.at(1).pos;
+	glm::vec4 gl_pos = PV * obj.world_M() * glm::vec4(pivot, 1.0f);
+	gl_pos = gl_pos / gl_pos.w;
+	if (1.0f < abs(gl_pos.x))return true;
+	else if (1.0f < abs(gl_pos.y))return true;	
+	else if (1.0f < gl_pos.z)return true;
+	else return false;
+}
 /*그리기 함수*/
 GLvoid drawScene() {
 	/*기본 배경*/
@@ -224,6 +235,7 @@ GLvoid drawScene() {
 
 	//std::cout << light_num;
 	std::vector<Obj*> Alpha_objs;
+	Alpha_objs.reserve(16);
 	/*그리기 시작*/
 	{
 		glFrontFace(GL_CW);
@@ -243,12 +255,23 @@ GLvoid drawScene() {
 		}
 	}
 	/*alpha*/
-	{
-		/*투명 ALpha_objs 로 push 하면 정렬한 후 드로우 함*/
+	/*투명 ALpha_objs 로 push 하면 정렬한 후 드로우 함*/
+	{	
+		/*
+		최적화와 정확도 문제로 사용 중단.
+
+		glm::mat4 PV = df * screen.proj_M() * camera.view_M();
+		for (int i = 0; i < cloudnum; i++) {
+			if (!cull_this_in_proj(cloud[i], PV)) {
+				Alpha_objs.push_back(&cloud[i]);
+			}
+		}
+		*/
 	}
 	/*그리기 끝*/
 	Sort_Alpha_blending(Alpha_objs);
 	Draw_Alpha_blending(Alpha_objs);
+	
 	glutSwapBuffers();
 }
 
@@ -303,7 +326,7 @@ GLvoid Timer(int value) {
 		break;
 	}
 	case 1: {
-		bool camera_mode = false;
+
 		if (up) {
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS/6)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
@@ -325,7 +348,6 @@ GLvoid Timer(int value) {
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 
-		plane.update(camera_mode);
 		if (P_go) {
 			plane.set_speed(0.08f);
 		}
@@ -333,16 +355,20 @@ GLvoid Timer(int value) {
 			plane.set_speed(-0.1f);
 		}
 		if (P_YL) {
-			plane.Yaw(degree / (FPS / 6));
+			//ver 1
+			//plane.Yaw(degree / (FPS / 6));
 		}
 		if (P_YR) {
-			plane.Yaw(-degree / (FPS / 6));
+			//ver 1
+			//plane.Yaw(-degree / (FPS / 6));
 		}
 		if (P_RL) {
 			plane.Roll(degree / (FPS / 24));
+			//plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_RR) {
 			plane.Roll(-degree / (FPS / 24));
+			//plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_PU) {
 			plane.Pitch(degree / (FPS / 4.8));
@@ -350,6 +376,7 @@ GLvoid Timer(int value) {
 		if (P_PD) {
 			plane.Pitch(-degree / (FPS / 4.8));
 		}
+		plane.update();
 		glutTimerFunc(1200 / FPS, Timer, value);
 		break;
 	}

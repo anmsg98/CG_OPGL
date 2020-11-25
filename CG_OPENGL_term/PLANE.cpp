@@ -1,6 +1,12 @@
 #include"PLANE.h"
 
 PLANE plane;
+#define ROOT2 1.41421
+//이 값은 속도에 비례해야 자연스러우나, 생략.
+GLclampf PLANE::recover_roll{ 0.05f };
+//중력장
+glm::vec3 PLANE::grav{ 0.0,-1.0,0.0 };
+
 
 void PLANE::init() {
 	// 0 Trans	1 Yaw	2 Pitch	3 Roll	4 Size
@@ -49,13 +55,31 @@ void PLANE::Pitch(GLfloat degree) {
 	update_coor(m);
 }
 void PLANE::Roll(GLfloat degree) {
+	this->turn_degree += degree;
 	glm::mat4 m = roll_(degree);
 	obj.M.at(1) = m * obj.M.at(1);
 	update_coor(m);
 }
 
+void PLANE::reRoll() {
+	this->Roll( -this->turn_degree * PLANE::recover_roll);
+
+	if (abs(this->turn_degree) < 0.01f) {
+		this->Roll(-this->turn_degree);
+	}
+	//std::cout << turn_degree << '\t';
+}
+
 void PLANE::go() {
-	glm::mat4 m = glm::translate(df, nDir() * -speed) * glm::translate(df, { 0.0,-1.0,0.0 });
+	constexpr GLfloat rollspeed{ -2.0f };
+	//ver 3.2
+	//GLfloat t = glm::sin(turn_degree) * rollspeed;
+	GLfloat t = glm::sin(glm::radians(turn_degree)) * rollspeed * speed;
+
+	glm::mat4 m = glm::translate(df, nDir() * -speed)  * glm::translate(df, camera.Right() * t) * glm::translate(df, PLANE::grav);
+
+
+	//go
 	this->pos = m * glm::vec4{ this->pos,1.0f };
 	check_area();
 }
@@ -99,12 +123,16 @@ void PLANE::update_head_light(){
 }
 
 
-void PLANE::update(bool s) {
-	if (!s)this->view();
-	this->set_speed(-0.03f);
+void PLANE::update() {
+	//ver 2 go view 순서
+	this->view();
 	this->go();
+
 	this->setPos();
+	this->set_speed(-0.03f);
 	this->update_head_light();
+	//ver 3
+	//this->reRoll();
 }
 
 

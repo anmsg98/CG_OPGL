@@ -10,12 +10,15 @@
 #endif // !LIGHT_H
 
 struct PLANE {
+	static GLclampf recover_roll;
+	static glm::vec3 grav;
 	Obj obj;
 	glm::vec3 pos{ 0.0,1000.0,0.0 };
 	
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
 	glm::vec3 up{ 0.0,1.0,0.0 };
+	GLfloat turn_degree{ 0.0f };
 
 	glm::mat4 viewMat{ df };
 	GLfloat view_dist{ 100.0f };
@@ -45,6 +48,7 @@ struct PLANE {
 	void Pitch(GLfloat degree);
 	void Roll(GLfloat degree);
 
+	void reRoll();
 	void go();
 
 	void check_area();
@@ -64,6 +68,6 @@ struct PLANE {
 
 	void HeadLightOnOff();
 	void update_head_light();
-	void update(bool s);
+	void update();
 };
 extern PLANE plane;
