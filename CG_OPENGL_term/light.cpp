@@ -15,7 +15,7 @@ glm::vec3 LIGHT::ambientColor{ 1.0,1.0,1.0 };
 GLfloat LIGHT::spot_cos(int i) { float a = 1.0f + i * 0.8f; if (this->use_spot)return glm::cos(glm::radians(this->spot_theta*a)); else return 2.0f;/*abs()<=1.0*/ }
 
 bool LIGHT::on() {
-	if (MAX_LIGHTS <= lights.size()) { std::cout << "check"; return false; };
+	if (MAX_LIGHTS <= lights.size()) { std::cout << "light_max_num_check"; return false; };
 	if (find(lights.begin(), lights.end(), this) == lights.end()) {
 		light_num += 1;
 		
