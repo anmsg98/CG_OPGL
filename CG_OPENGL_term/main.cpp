@@ -28,11 +28,15 @@ GLvoid MakeShape();
 GLvoid DefaultObj();
 GLvoid print_message();
 /**/
-
-
+struct bullet_ {
+	LIGHT light;
+	glm::vec3 dir;
+	unsigned int life{ 10000 }; // light_num  고려
+};
+ObjData sphere;
 Obj coordinate, world, ground, building[buildingnum], cloud[cloudnum];
 LIGHT sun, moon;
-std::vector<LIGHT> thunder, bullet;
+std::vector<bullet_> bullet;
 
 /*-----MAIN--*/
 int main(int argc, char** argv) {
@@ -105,7 +109,8 @@ GLvoid print_message() {
 	std::cout <<
 		"\
 		-= -= -= -= -= -= -= -= -= -= -= -= -= -= -\n\
-		time_stop[space]\n\
+		time_stop[ z ]\n\
+		fire[ space ]\n\
 		head_light [ 1 2 3 ]\n\
 		plane[w a s d up(8) down(5) left(4) right(6)]\n\
 		rebuilding[tab]\n\
@@ -114,6 +119,12 @@ GLvoid print_message() {
 		";
 }
 GLvoid DefaultObj() {
+	/*temp sphere*/
+	Obj obj;
+	LoadObj("sphere.obj", obj, "8/8/8");
+	obj.DelObj();
+	sphere = obj.objData;
+
 	/*world*/
 	LoadObj("sphere.obj", world, "8/8/8");
 	LoadTexture(world, "skydome.jpg", 2048, 1024, 3);
@@ -253,6 +264,9 @@ GLvoid drawScene() {
 		for (int i = 0; i < cloudnum; i++) {
 			drawObj(cloud[i]);
 		}
+		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
+			drawObj(i->light.obj);
+		}
 	}
 	/*alpha*/
 	/*투명 ALpha_objs 로 push 하면 정렬한 후 드로우 함*/
@@ -278,7 +292,7 @@ GLvoid drawScene() {
 
 
 /*이벤트 함수*/
-bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, bl_snow, stealth, timeStop;
+bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
 bool up, down, left, right;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
@@ -326,7 +340,42 @@ GLvoid Timer(int value) {
 		break;
 	}
 	case 1: {
+		/**/
+		if (bl_shot) {
+			LIGHT b;
+			b.obj.objData = sphere;
+			b.obj.M.resize(3, df);
+			// 총알 머리 = 뱅기 머리.
+			b.obj.M[2] = glm::scale(df, { 0.1,0.1,1.0 });
+			// 총알 회전 == 뱅기 회전.
+			b.obj.M[1] = plane.obj.M[1];
+			b.col = { (rand() % 100) / 100,(rand() % 100) / 100 ,(rand() % 100) / 100 };
+			
+			
+			bullet.push_back(bullet_());;
 
+			bullet_* a = &(bullet.back());
+			a->light = b;
+			a->light.on();
+			a->dir = -1.0f * plane.nDir();
+			a->light.pos = plane.pos + a->dir * 3.0f;
+
+			//update 에서 함 b->obj.M[0] = plane.obj.M[0] * glm::translate(df, { plane.nDir() * -3.0f });
+		}
+		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
+			i->light.pos += i->dir;
+			i->light.update();
+			i->life -= 1;
+			if (i->life == 0) {
+				i->light.off();
+				bullet.erase(i);
+				e = bullet.end();
+				std::cout << "E";
+			}
+		}
+
+
+		/**/
 		if (up) {
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS/6)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
@@ -487,6 +536,10 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
+	case '`': {
+		bl_rain = bl_rain ? false : true;
+		break;
+	}
 	case 'i': {
 		up = true;
 		break;
@@ -571,9 +624,13 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		P_PU = true;
 		break;
 	}	
-	case ' ': {
+	case 'Z':
+	case 'z': {
 		timeStop = timeStop ? false : true;
-
+		break;
+	}
+	case ' ': {
+		bl_shot = bl_shot ? false : true;
 		break;
 	}
 	default: { break; }

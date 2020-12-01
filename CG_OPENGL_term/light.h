@@ -31,11 +31,12 @@ struct LIGHT {
 	GLfloat spot_theta{ 5.0f };
 	bool is_on{ false };
 
-	GLfloat spot_cos(int i);
+	static void init_light_buffer();
 
+	GLfloat spot_cos(int i);
 	bool on();
 	void off();
 	bool on_off();
 	void update();
-	static void init_light_buffer();
+
 };
