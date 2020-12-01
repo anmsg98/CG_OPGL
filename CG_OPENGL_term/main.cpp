@@ -29,11 +29,10 @@ GLvoid DefaultObj();
 GLvoid print_message();
 /**/
 struct bullet_ {
-	LIGHT light;
+	Obj obj;
 	glm::vec3 dir;
-	unsigned int life{ 10000 }; // light_num  °í·Á
+	unsigned int life{ 100 }; 
 };
-ObjData sphere;
 Obj coordinate, world, ground, building[buildingnum], cloud[cloudnum];
 LIGHT sun, moon;
 std::vector<bullet_> bullet;
@@ -120,10 +119,7 @@ GLvoid print_message() {
 }
 GLvoid DefaultObj() {
 	/*temp sphere*/
-	Obj obj;
-	LoadObj("sphere.obj", obj, "8/8/8");
-	obj.DelObj();
-	sphere = obj.objData;
+
 
 	/*world*/
 	LoadObj("sphere.obj", world, "8/8/8");
@@ -265,7 +261,7 @@ GLvoid drawScene() {
 			drawObj(cloud[i]);
 		}
 		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
-			drawObj(i->light.obj);
+			drawObj(i->obj);
 		}
 	}
 	/*alpha*/
@@ -342,38 +338,34 @@ GLvoid Timer(int value) {
 	case 1: {
 		/**/
 		if (bl_shot) {
-			LIGHT b;
-			b.obj.objData = sphere;
-			b.obj.M.resize(3, df);
-			// ÃÑ¾Ë ¸Ó¸® = ¹ð±â ¸Ó¸®.
-			b.obj.M[2] = glm::scale(df, { 0.1,0.1,1.0 });
-			// ÃÑ¾Ë È¸Àü == ¹ð±â È¸Àü.
-			b.obj.M[1] = plane.obj.M[1];
-			b.col = { (rand() % 100) / 100,(rand() % 100) / 100 ,(rand() % 100) / 100 };
-			
-			
 			bullet.push_back(bullet_());;
-
 			bullet_* a = &(bullet.back());
-			a->light = b;
-			a->light.on();
-			a->dir = -1.0f * plane.nDir();
-			a->light.pos = plane.pos + a->dir * 3.0f;
-
+			LoadObj("sphere.obj", a->obj, "8/8/8");
+			a->obj.M.resize(3, df);
+			// ÃÑ¾Ë ¸Ó¸® = ¹ð±â ¸Ó¸®.
+			a->obj.M[2] = glm::scale(df, { 0.1,0.1,1.0 });
+			// ÃÑ¾Ë È¸Àü == ¹ð±â È¸Àü.
+			a->obj.M[1] = plane.obj.M[1];
+			a->obj.M[0] = plane.obj.M[0];
+			a->obj.Set_Color({ 100.0f,100.0f,100.0f,1.0f });
+			
+			a->dir = -1.0f * camera.Dir();
+			a->obj.M[0] *= glm::translate(df, a->dir);
 			//update ¿¡¼­ ÇÔ b->obj.M[0] = plane.obj.M[0] * glm::translate(df, { plane.nDir() * -3.0f });
 		}
+		std::vector<std::vector<bullet_>::iterator> trashcan;
 		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
-			i->light.pos += i->dir;
-			i->light.update();
+			i->obj.M[0] *= glm::translate(df, i->dir * (plane.maxspeed+10.0f));
 			i->life -= 1;
 			if (i->life == 0) {
-				i->light.off();
-				bullet.erase(i);
-				e = bullet.end();
-				std::cout << "E";
+				trashcan.reserve(1);
+				trashcan.push_back(i);
 			}
 		}
-
+		for (std::vector<std::vector<bullet_>::iterator>::iterator i = trashcan.begin(), e = trashcan.end(); i != e; i++) {
+			(*i)->obj.DelObj();
+			bullet.erase(*i);
+		}
 
 		/**/
 		if (up) {
@@ -630,7 +622,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		break;
 	}
 	case ' ': {
-		bl_shot = bl_shot ? false : true;
+		bl_shot = true;
 		break;
 	}
 	default: { break; }
@@ -691,6 +683,10 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 	}
 	case '5': {
 		P_PU = false;
+		break;
+	}
+	case ' ': {
+		bl_shot = false;
 		break;
 	}
 	default:
