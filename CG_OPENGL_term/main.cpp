@@ -288,6 +288,7 @@ GLvoid drawScene() {
 
 
 /*이벤트 함수*/
+int shot_delay = 0;
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
 bool up, down, left, right;
 GLvoid Timer(int value) {
@@ -295,27 +296,8 @@ GLvoid Timer(int value) {
 	switch (value)
 	{
 	case 0: {
-		if (timeStop == false) {
-			constexpr GLfloat light_degree{ -1.0f };
-			sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
-			sun.update();
-			if (ground_floor < sun.pos.y) {
-				GLfloat d = sun.pos.y / groundsize;
-				LIGHT::ambient = d;
-				LIGHT::ambientColor = { 1.0,d,1.0 };
-				sun.on();
-			}
-			else sun.off();
-			moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
-			moon.update();
-			if (ground_floor < moon.pos.y) {
-				LIGHT::ambient = 0.3f;
-				LIGHT::ambientColor = { 0.2,0.2,1.0 };
-				moon.on();
-			}
-			else moon.off();
-		}
 		
+
 		if (stealth) {
 			constexpr int tm{ 50 };
 			constexpr int tm2{ 25 };
@@ -337,54 +319,58 @@ GLvoid Timer(int value) {
 	}
 	case 1: {
 		/**/
-		if (bl_shot) {
-			bullet.push_back(bullet_());;
-			bullet_* a = &(bullet.back());
-			LoadObj("sphere.obj", a->obj, "8/8/8");
-			a->obj.M.resize(3, df);
-			// 총알 머리 = 뱅기 머리.
-			a->obj.M[2] = glm::scale(df, { 0.1,0.1,1.0 });
-			// 총알 회전 == 뱅기 회전.
-			a->obj.M[1] = plane.obj.M[1];
-			a->obj.M[0] = plane.obj.M[0];
-			a->obj.Set_Color({ 100.0f,100.0f,100.0f,1.0f });
-			
-			a->dir = -1.0f * camera.Dir();
-			a->obj.M[0] *= glm::translate(df, a->dir);
-			//update 에서 함 b->obj.M[0] = plane.obj.M[0] * glm::translate(df, { plane.nDir() * -3.0f });
-		}
-		std::vector<std::vector<bullet_>::iterator> trashcan;
-		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
-			i->obj.M[0] *= glm::translate(df, i->dir * (plane.maxspeed+10.0f));
-			i->life -= 1;
-			if (i->life == 0) {
-				trashcan.reserve(1);
-				trashcan.push_back(i);
+		shot_delay = (shot_delay + 1) % 5; 
+		if (shot_delay == 0) {
+			if (bl_shot) {
+				bullet.push_back(bullet_());;
+				bullet_* a = &(bullet.back());
+				LoadObj("sphere.obj", a->obj, "8/8/8");
+				a->obj.M.resize(3, df);
+				// 총알 머리 = 뱅기 머리.
+				a->obj.M[2] = glm::scale(df, { 0.1,0.1,1.0 });
+				// 총알 회전 == 뱅기 회전.
+				a->obj.M[1] = plane.obj.M[1];
+				a->obj.M[0] = plane.obj.M[0];
+				a->obj.Set_Color({ 100.0f,100.0f,100.0f,1.0f });
+
+				a->dir = -1.0f * camera.Dir();
+				a->obj.M[0] *= glm::translate(df, a->dir);
+				//update 에서 함 b->obj.M[0] = plane.obj.M[0] * glm::translate(df, { plane.nDir() * -3.0f });
 			}
 		}
-		for (std::vector<std::vector<bullet_>::iterator>::iterator i = trashcan.begin(), e = trashcan.end(); i != e; i++) {
-			(*i)->obj.DelObj();
-			bullet.erase(*i);
-		}
+			std::vector<std::vector<bullet_>::iterator> trashcan;
+			for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
+				i->obj.M[0] *= glm::translate(df, i->dir * (plane.maxspeed + 10.0f));
+				i->life -= 1;
+				if (i->life == 0) {
+					trashcan.reserve(1);
+					trashcan.push_back(i);
+				}
+			}
+			for (std::vector<std::vector<bullet_>::iterator>::iterator i = trashcan.begin(), e = trashcan.end(); i != e; i++) {
+				(*i)->obj.DelObj();
+				bullet.erase(*i);
+			}
+		
 
 		/**/
 		if (up) {
-			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS/6)), camera.Right());
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS/12)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (down) {
-			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 6)), camera.Right());
+			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 12)), camera.Right());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (right) {
-			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 6)), camera.Up());
+			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 12)), camera.Up());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (left) {
-			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS / 6)), camera.Up());
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS / 12)), camera.Up());
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
@@ -397,25 +383,45 @@ GLvoid Timer(int value) {
 		}
 		if (P_YL) {
 			//ver 1
-			//plane.Yaw(degree / (FPS / 6));
+			plane.Yaw(degree / (FPS / 6));
 		}
 		if (P_YR) {
 			//ver 1
-			//plane.Yaw(-degree / (FPS / 6));
+			plane.Yaw(-degree / (FPS / 6));
 		}
 		if (P_RL) {
 			plane.Roll(degree / (FPS / 24));
-			//plane.Pitch(degree / (FPS / 4.8));
+			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_RR) {
 			plane.Roll(-degree / (FPS / 24));
-			//plane.Pitch(degree / (FPS / 4.8));
+			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_PU) {
 			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_PD) {
 			plane.Pitch(-degree / (FPS / 4.8));
+		}
+		if (timeStop == false) {
+			constexpr GLfloat light_degree{ -1.0f };
+			sun.pos = glm::rotate(df, glm::radians(light_degree / (FPS/ 24.0f)), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
+			sun.update();
+			if (ground_floor < sun.pos.y) {
+				GLfloat d = sun.pos.y / groundsize;
+				LIGHT::ambient = d;
+				LIGHT::ambientColor = { 1.0,d,1.0 };
+				sun.on();
+			}
+			else sun.off();
+			moon.pos = glm::rotate(df, glm::radians(light_degree / (FPS / 24.0f)), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
+			moon.update();
+			if (ground_floor < moon.pos.y) {
+				LIGHT::ambient = 0.3f;
+				LIGHT::ambientColor = { 0.2,0.2,1.0 };
+				moon.on();
+			}
+			else moon.off();
 		}
 		plane.update();
 		glutTimerFunc(1200 / FPS, Timer, value);
