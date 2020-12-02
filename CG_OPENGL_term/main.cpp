@@ -25,11 +25,12 @@ GLvoid Mouse(int button, int state, int x, int y);
 GLvoid Motion(int x, int y);
 GLvoid MouseWheel(int button, int dir, int x, int y);
 GLvoid Timer(int value);
+GLvoid MakeIM();
 /**/
 GLvoid MakeShape();
 GLvoid DefaultObj();
 GLvoid print_message();
-GLvoid Reserve_IM();
+
 /**/
 struct bullet_ {
 	Obj obj;
@@ -37,11 +38,9 @@ struct bullet_ {
 	unsigned int life{ 100 }; 
 };
 Obj world;
-Obj ground, building[buildingnum], cloud[cloudnum];
+Obj ground[IM], building[IM][buildingnum], cloud[IM][cloudnum];
 LIGHT sun, moon;
 std::vector<bullet_> bullet;
-
-std::vector<Obj*> MAP[IM];
 
 /*-----MAIN--*/
 int main(int argc, char** argv) {
@@ -107,7 +106,6 @@ int main(int argc, char** argv) {
 	DefaultObj();
 	MakeShape();
 	print_message();
-	Reserve_IM();
 
 	/* Loop */
 	glutMainLoop();
@@ -138,7 +136,7 @@ GLvoid DefaultObj() {
 	/*light*/
 	LoadObj("sphere.obj", sun.obj, "8/8/8");
 	sun.obj.Set_Color({ 10.0, 5.0, 5.0, 1.0 });
-	sun.pos = { groundsize, 0.0, 0.0 };
+	sun.pos = { groundsize*3.0f, 0.0, 0.0 };
 	sun.col = { 100.0,100.0,100.0 };
 	sun.obj.M.resize(2, df);
 	sun.obj.M.push_back(glm::scale(df, glm::vec3(80.0f)));
@@ -147,7 +145,7 @@ GLvoid DefaultObj() {
 
 	LoadObj("sphere.obj", moon.obj, "8/8/8");
 	moon.obj.Set_Color({ 1.0, 1.0, 10.0, 1.0 });
-	moon.pos = { -groundsize, 0.0, 0.0 };
+	moon.pos = { groundsize*-3.0f, 0.0, 0.0 };
 	moon.col = { 0.5,0.5,100.0 };
 	moon.obj.M.resize(2, df);
 	moon.obj.M.push_back(glm::scale(df, glm::vec3(40.0f)));
@@ -156,38 +154,74 @@ GLvoid MakeShape() {
 	plane.init();
 	{
 		for (int i = 0; i < buildingnum; i++) {
-			LoadObj("apartment.obj", building[i], "8/8/8");
-			building[i].Set_Color({ 0.5f,0.5f,GLfloat(rand() % 10) / 10.0f,1.0f });
-			building[i].M.resize(3, df);
-			building[i].M.at(2) = glm::scale(df, glm::vec3(10.0f));
-			building[i].M.at(1) = glm::rotate(df,glm::radians(GLfloat(rand()%360)), {0.0,1.0,0.0});
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,ground_floor,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			LoadObj("apartment.obj", building[0][i], "8/8/8");
+			building[0][i].Set_Color({ 0.5f,0.5f,GLfloat(rand() % 10) / 10.0f,1.0f });
+			building[0][i].M.resize(3, df);
+			building[0][i].M.at(2) = glm::scale(df, glm::vec3(10.0f));
+			building[0][i].M.at(1) = glm::rotate(df,glm::radians(GLfloat(rand()%360)), {0.0,1.0,0.0});
+			building[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,ground_floor,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
 		for (int i = 0; i < cloudnum; i++) {
-			LoadObj("cloud.obj", cloud[i], "8/8/8");
-			cloud[i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
-			cloud[i].M.resize(3, df);
-			cloud[i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
-			cloud[i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-			cloud[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			LoadObj("cloud.obj", cloud[0][i], "8/8/8");
+			cloud[0][i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
+			cloud[0][i].M.resize(3, df);
+			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
-		LoadObj("cube.txt", ground, "8/8/8");
-		LoadTexture(ground, "grass.jpg", 512, 512, 3);
-		ground.M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
-		ground.M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
+		LoadObj("cube.txt", ground[0], "8/8/8");
+		LoadTexture(ground[0], "grass.jpg", 512, 512, 3);
+		ground[0].M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
+		ground[0].M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
 	}
 	/**/
+	MakeIM();
 };
-GLvoid Reserve_IM() {
-	size_t objss{ buildingnum + cloudnum + 1 };
-	for (int i = 0; i < IM; i++) {
-		MAP[i].reserve(objss);
+GLvoid MakeIM() {
+	/*
+			1 2 3
+		^	4 0 5
+		z	6 7 8
+			x >
+	
+	*/
+	constexpr GLfloat size{ groundsize * 2.0f };
+	glm::mat4 tr[IM]{
+		glm::mat4(1.0f),
+		glm::translate(df,{-size,0.0,size}),
+		glm::translate(df,{0.0,0.0,size}),
+		glm::translate(df,{size,0.0,size}),
+
+		glm::translate(df,{-size,0.0,0.0}),
+		glm::translate(df,{size,0.0,0.0}),
+
+		glm::translate(df,{-size,0.0,-size}),
+		glm::translate(df,{0.0,0.0,-size}),
+		glm::translate(df,{size,0.0,-size}),
+	};
+
+	for (int im = 1; im < IM; im++) {
+		for (int j = 0; j < buildingnum; j++) {
+			building[im][j] = building[0][j];
+			building[im][j].M.at(0) *= tr[im];
+		}
+	}
+	for (int im = 1; im < IM; im++) {
+		for (int j = 0; j < cloudnum; j++) {
+			cloud[im][j] = cloud[0][j];
+			cloud[im][j].M.at(0) *= tr[im];
+		}
+	}
+	for (int im = 1; im < IM; im++) {
+		ground[im] = ground[0];
+		ground[im].M.at(0) *= tr[im];
 	}
 }
+
 
 bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
 	// 속도떔시 대충 만든 코드, 부정확하지만 일단 사용.
@@ -200,56 +234,6 @@ bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
 	else return false;
 }
 /*그리기 함수*/
-GLvoid Set_IM() {
-	/* ground, building, cloud */
-	MAP[0].push_back(&ground);
-
-	for (int i = 0; i < buildingnum; i++) {
-		MAP[0].push_back(&building[i]);
-	}
-
-	for (int i = 0; i < cloudnum; i++) {
-		MAP[0].push_back(&cloud[i]);
-	}
-}
-GLvoid Make_IM() {
-	/*
-	
-			1 2 3
-		^	4 0 5
-		z	6 7 8
-			x >
-	
-	*/
-
-
-	// MAP copy
-	for (int i = 1; i < IM; i++) {
-		MAP[i] = MAP[0];
-	}
-
-	// MAP trans
-	glm::mat4 trans[IM]{
-		glm::mat4(1.0f),
-
-		glm::translate(df,{-groundsize,0.0,groundsize}),
-		glm::translate(df,{0.0,0.0,groundsize}),
-		glm::translate(df,{groundsize,0.0,groundsize}),
-
-		glm::translate(df,{-groundsize,0.0,0.0}),
-		glm::translate(df,{groundsize,0.0,0.0}),
-
-		glm::translate(df,{-groundsize,0.0,-groundsize}),
-		glm::translate(df,{0.0,0.0,-groundsize}),
-		glm::translate(df,{groundsize,0.0,-groundsize})
-	};
-	for (int i = 1; i < IM; i++) {
-		for (std::vector<Obj*>::iterator o = MAP[i].begin(), e = MAP[i].end(); o != e; o++) {
-			(*o)->M.at(0) *= trans[i];
-		}
-	}
-	//groundsize;
-}
 GLvoid Set_draw() {
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -274,9 +258,6 @@ GLvoid Set_draw() {
 GLvoid drawScene() {
 	/*기본 배경*/
 	Set_draw();
-	
-	Set_IM();
-	//Make_IM();
 
 	/*그리기 시작*/
 	std::vector<Obj*> Alpha_objs;
@@ -290,13 +271,20 @@ GLvoid drawScene() {
 		/*불투명*/
 		drawObj(sun.obj);
 		drawObj(moon.obj);
-		drawObj(ground);
-		for (int i = 0; i < buildingnum; i++) {
-			drawObj(building[i]);
+		for (int im = 0; im < IM; im++) {
+			drawObj(ground[im]);
 		}
-		for (int i = 0; i < cloudnum; i++) {
-			drawObj(cloud[i]);
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < buildingnum; i++) {
+				drawObj(building[im][i]);
+			}
 		}
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < cloudnum; i++) {
+				drawObj(cloud[im][i]);
+			}
+		}
+
 		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
 			drawObj(i->obj);
 		}
@@ -344,28 +332,12 @@ GLvoid Timer(int value) {
 			moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
 			moon.update();
 			if (ground_floor < moon.pos.y) {
-				LIGHT::ambient = 0.3f;
+				LIGHT::ambient = 0.5f;
 				LIGHT::ambientColor = { 0.2,0.2,1.0 };
 				moon.on();
 			}
 			else moon.off();
 		}
-		
-		if (stealth) {
-			constexpr int tm{ 50 };
-			constexpr int tm2{ 25 };
-			static int time{ tm };
-			if(tm2<time)plane.Stealth(true);
-			else if(time%2) {
-				plane.Stealth(true);
-			}
-			else {
-				plane.Stealth(false);
-			}
-			time--;
-			if (time < 0)stealth = false, time = tm;
-		}
-		
 		
 		glutTimerFunc(50, Timer, value);
 		break;
@@ -432,11 +404,11 @@ GLvoid Timer(int value) {
 		}
 		if (P_YL) {
 			//ver 1
-			//plane.Yaw(degree / (FPS / 6));
+			plane.Yaw(degree / (FPS / 6));
 		}
 		if (P_YR) {
 			//ver 1
-			//plane.Yaw(-degree / (FPS / 6));
+			plane.Yaw(-degree / (FPS / 6));
 		}
 		if (P_RL) {
 			plane.Roll(degree / (FPS / 24));
@@ -496,8 +468,14 @@ GLvoid Mouse(int button, int state, int x, int y) {
 	}
 }
 GLvoid Motion(int x, int y) {
+	constexpr GLfloat degree{ 5.0f };
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
-	
+	if (GLx < -0.2f) {
+		plane.Yaw(degree / (FPS / 6));
+	}
+	else if (0.2f < GLx) {
+		plane.Yaw(-degree / (FPS / 6));
+	}
 	glutPostRedisplay();
 }
 GLvoid MouseWheel(int button, int dir, int x, int y) {
@@ -591,7 +569,12 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	}
 	case '\t': {
 		for (int i = 0; i < buildingnum; i++) {
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			building[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+		}
+		for (int m = 1; m < IM; m++) {
+			for (int i = 0; i < buildingnum; i++) {
+				building[m][i].M.at(0) = building[0][i].M.at(0);
+			}
 		}
 		break;
 	}

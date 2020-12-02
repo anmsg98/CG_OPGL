@@ -27,8 +27,8 @@ uniform int light_num;
 
 float attenuation(vec3 att_lightPos){
 	float constant = 1.0f;
-	float linear = 0.000035f;
-	float quadratic = 0.0000002f;
+	float linear = 0.00005f;
+	float quadratic = 0.000002f;
 	float dist =distance(fragPos,att_lightPos);
 	float under = constant + linear*dist + quadratic*dist*dist;
 	return 1.0/under;
