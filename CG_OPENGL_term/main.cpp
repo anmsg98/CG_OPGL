@@ -167,7 +167,7 @@ GLvoid MakeShape() {
 			LoadObj("cloud.obj", cloud[0][i], "8/8/8");
 			cloud[0][i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
 			cloud[0][i].M.resize(3, df);
-			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(2.0f));
 			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
 			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+10000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
