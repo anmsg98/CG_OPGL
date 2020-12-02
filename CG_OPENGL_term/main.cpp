@@ -11,6 +11,8 @@
 #define FLYING 1
 #define FPS 60 
 
+constexpr int IM{ 9 };
+
 /*Funcs*/
 GLvoid drawScene(GLvoid);
 /**/
@@ -27,15 +29,19 @@ GLvoid Timer(int value);
 GLvoid MakeShape();
 GLvoid DefaultObj();
 GLvoid print_message();
+GLvoid Reserve_IM();
 /**/
 struct bullet_ {
 	Obj obj;
 	glm::vec3 dir;
 	unsigned int life{ 100 }; 
 };
-Obj coordinate, world, ground, building[buildingnum], cloud[cloudnum];
+Obj world;
+Obj ground, building[buildingnum], cloud[cloudnum];
 LIGHT sun, moon;
 std::vector<bullet_> bullet;
+
+std::vector<Obj*> MAP[IM];
 
 /*-----MAIN--*/
 int main(int argc, char** argv) {
@@ -74,11 +80,6 @@ int main(int argc, char** argv) {
 	/* uniform */
 	init_uniform_Loc();
 
-	/*  */
-	set_flip_texture(true);
-	DefaultObj();
-	MakeShape();
-
 	/* states */
 	glFrontFace(GL_CCW);
 	glEnable(GL_CULL_FACE);
@@ -97,11 +98,18 @@ int main(int argc, char** argv) {
 	glutMotionFunc(Motion);
 	glutMouseWheelFunc(MouseWheel);
 
+	/* set timer */
 	glutTimerFunc(50, Timer, 0);
 	glutTimerFunc(12000 / FPS, Timer, 1);
 
+	/* setting */
+	set_flip_texture(true);
+	DefaultObj();
+	MakeShape();
 	print_message();
+	Reserve_IM();
 
+	/* Loop */
 	glutMainLoop();
 }
 GLvoid print_message() {
@@ -143,37 +151,6 @@ GLvoid DefaultObj() {
 	moon.col = { 0.5,0.5,100.0 };
 	moon.obj.M.resize(2, df);
 	moon.obj.M.push_back(glm::scale(df, glm::vec3(40.0f)));
-
-
-	/*coord*/
-	{
-		Vertex V;
-		GLfloat sizex = screen.size_of_world[0] * 0.8f;
-		GLfloat sizey = screen.size_of_world[1] * 0.8f;
-		GLfloat sizez = screen.size_of_world[2] * 0.8f;
-		constexpr int VofC{ 100 };
-		constexpr int dd{ VofC - 1 };
-		constexpr int iy = 2 * VofC;
-		constexpr int iz = 3 * VofC;
-		for (GLfloat i = 0; i < iz; i++) {
-			if (i < VofC) {
-				V.col = glm::vec4(0.8f, 0.0f, 0.0f, 1.0f);
-				V.pos = glm::vec3(-sizex + 2 * i * sizex / dd, 0.0f, 0.0f);
-			}
-			else if (i < iy) {
-				V.col = glm::vec4(0.0f, 0.8f, 0.0f, 1.0f);
-				V.pos = glm::vec3(0.0f, -sizey + 2 * (i - VofC) * sizey / dd, 0.0f);
-			}
-			else {
-				V.col = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
-				V.pos = glm::vec3(0.0f, 0.0f, -sizez + 2 * (i - iy) * sizez / dd);
-			}
-			coordinate.objData.vertices.push_back(V);
-			coordinate.objData.verIndices.push_back(i);
-		}
-		coordinate.shape = GL_LINES;
-		InitBuffer(coordinate);
-	}
 }
 GLvoid MakeShape() {
 	plane.init();
@@ -205,7 +182,12 @@ GLvoid MakeShape() {
 	}
 	/**/
 };
-
+GLvoid Reserve_IM() {
+	size_t objss{ buildingnum + cloudnum + 1 };
+	for (int i = 0; i < IM; i++) {
+		MAP[i].reserve(objss);
+	}
+}
 
 bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
 	// 속도떔시 대충 만든 코드, 부정확하지만 일단 사용.
@@ -218,8 +200,57 @@ bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
 	else return false;
 }
 /*그리기 함수*/
-GLvoid drawScene() {
-	/*기본 배경*/
+GLvoid Set_IM() {
+	/* ground, building, cloud */
+	MAP[0].push_back(&ground);
+
+	for (int i = 0; i < buildingnum; i++) {
+		MAP[0].push_back(&building[i]);
+	}
+
+	for (int i = 0; i < cloudnum; i++) {
+		MAP[0].push_back(&cloud[i]);
+	}
+}
+GLvoid Make_IM() {
+	/*
+	
+			1 2 3
+		^	4 0 5
+		z	6 7 8
+			x >
+	
+	*/
+
+
+	// MAP copy
+	for (int i = 1; i < IM; i++) {
+		MAP[i] = MAP[0];
+	}
+
+	// MAP trans
+	glm::mat4 trans[IM]{
+		glm::mat4(1.0f),
+
+		glm::translate(df,{-groundsize,0.0,groundsize}),
+		glm::translate(df,{0.0,0.0,groundsize}),
+		glm::translate(df,{groundsize,0.0,groundsize}),
+
+		glm::translate(df,{-groundsize,0.0,0.0}),
+		glm::translate(df,{groundsize,0.0,0.0}),
+
+		glm::translate(df,{-groundsize,0.0,-groundsize}),
+		glm::translate(df,{0.0,0.0,-groundsize}),
+		glm::translate(df,{groundsize,0.0,-groundsize})
+	};
+	for (int i = 1; i < IM; i++) {
+		for (std::vector<Obj*>::iterator o = MAP[i].begin(), e = MAP[i].end(); o != e; o++) {
+			(*o)->M.at(0) *= trans[i];
+		}
+	}
+	//groundsize;
+}
+GLvoid Set_draw() {
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderID);
@@ -239,11 +270,17 @@ GLvoid drawScene() {
 	glUniform3f(specLoc, sun.spec.r, sun.spec.g, sun.spec.b);
 	glUniform1i(texLoc, 0);
 	glUniform1i(light_numLoc, LIGHT::light_num);
+}
+GLvoid drawScene() {
+	/*기본 배경*/
+	Set_draw();
+	
+	Set_IM();
+	//Make_IM();
 
-	//std::cout << light_num;
+	/*그리기 시작*/
 	std::vector<Obj*> Alpha_objs;
 	Alpha_objs.reserve(16);
-	/*그리기 시작*/
 	{
 		glFrontFace(GL_CW);
 		drawObj(world);
@@ -284,8 +321,6 @@ GLvoid drawScene() {
 	
 	glutSwapBuffers();
 }
-
-
 
 /*이벤트 함수*/
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
