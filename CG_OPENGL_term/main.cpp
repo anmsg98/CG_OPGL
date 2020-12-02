@@ -38,7 +38,7 @@ struct bullet_ {
 	unsigned int life{ 100 }; 
 };
 Obj world;
-Obj ground[IM], building[IM][buildingnum], cloud[IM][cloudnum];
+Obj ground[IM], building[IM][buildingnum], cloud[IM][cloudnum], monster[IM][50];
 LIGHT sun, moon;
 std::vector<bullet_> bullet;
 
@@ -173,6 +173,16 @@ GLvoid MakeShape() {
 		}
 	}
 	{
+		for (int i = 0; i < 50; i++) {
+			LoadObj("monster.obj", monster[0][i], "8/8/8");
+			monster[0][i].Set_Color({ 1.0f,0.0f,0.0f,1.0f });
+			monster[0][i].M.resize(3, df);
+			monster[0][i].M.at(2) = glm::scale(df, glm::vec3(5.0f));
+			monster[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			monster[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+		}
+	}
+	{
 		LoadObj("cube.txt", ground[0], "8/8/8");
 		LoadTexture(ground[0], "grass.jpg", 512, 512, 3);
 		ground[0].M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
@@ -214,6 +224,12 @@ GLvoid MakeIM() {
 		for (int j = 0; j < cloudnum; j++) {
 			cloud[im][j] = cloud[0][j];
 			cloud[im][j].M.at(0) *= tr[im];
+		}
+	}
+	for (int im = 1; im < IM; im++) {
+		for (int j = 0; j < 50; j++) {
+			monster[im][j] = monster[0][j];
+			monster[im][j].M.at(0) *= tr[im];
 		}
 	}
 	for (int im = 1; im < IM; im++) {
@@ -282,6 +298,11 @@ GLvoid drawScene() {
 		for (int im = 0; im < IM; im++) {
 			for (int i = 0; i < cloudnum; i++) {
 				drawObj(cloud[im][i]);
+			}
+		}
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < 50; i++) {
+				drawObj(monster[im][i]);
 			}
 		}
 
