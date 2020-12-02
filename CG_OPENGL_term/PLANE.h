@@ -24,7 +24,7 @@ struct PLANE {
 	GLfloat view_dist{ 100.0f };
 
 	GLfloat speed{ 10.0f };
-	GLfloat maxspeed{ 20.0f };
+	GLfloat maxspeed{ 200.0f };
 
 
 	LIGHT head_light;
@@ -62,9 +62,11 @@ struct PLANE {
 	void view_dist_add(GLfloat dist);
 
 	bool check_coll(glm::vec3 a,glm::vec3 b) {
-		// x,y , z 높이
+		// x,y , z 높이	전좌하 후우상
 		return false;
 	}
+	
+	bool check_horizon();
 
 	void HeadLightOnOff();
 	void update_head_light();

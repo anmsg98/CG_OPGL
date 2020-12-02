@@ -11,6 +11,8 @@
 #define FLYING 1
 #define FPS 60 
 
+constexpr int IM{ 9 };
+
 /*Funcs*/
 GLvoid drawScene(GLvoid);
 /**/
@@ -23,17 +25,20 @@ GLvoid Mouse(int button, int state, int x, int y);
 GLvoid Motion(int x, int y);
 GLvoid MouseWheel(int button, int dir, int x, int y);
 GLvoid Timer(int value);
+GLvoid MakeIM();
 /**/
 GLvoid MakeShape();
 GLvoid DefaultObj();
 GLvoid print_message();
+
 /**/
 struct bullet_ {
 	Obj obj;
 	glm::vec3 dir;
 	unsigned int life{ 100 }; 
 };
-Obj coordinate, world, ground, building[buildingnum], cloud[cloudnum];
+Obj world;
+Obj ground[IM], building[IM][buildingnum], cloud[IM][cloudnum], monster[IM][50];
 LIGHT sun, moon;
 std::vector<bullet_> bullet;
 
@@ -74,11 +79,6 @@ int main(int argc, char** argv) {
 	/* uniform */
 	init_uniform_Loc();
 
-	/*  */
-	set_flip_texture(true);
-	DefaultObj();
-	MakeShape();
-
 	/* states */
 	glFrontFace(GL_CCW);
 	glEnable(GL_CULL_FACE);
@@ -97,11 +97,17 @@ int main(int argc, char** argv) {
 	glutMotionFunc(Motion);
 	glutMouseWheelFunc(MouseWheel);
 
+	/* set timer */
 	glutTimerFunc(50, Timer, 0);
 	glutTimerFunc(12000 / FPS, Timer, 1);
 
+	/* setting */
+	set_flip_texture(true);
+	DefaultObj();
+	MakeShape();
 	print_message();
 
+	/* Loop */
 	glutMainLoop();
 }
 GLvoid print_message() {
@@ -130,7 +136,7 @@ GLvoid DefaultObj() {
 	/*light*/
 	LoadObj("sphere.obj", sun.obj, "8/8/8");
 	sun.obj.Set_Color({ 10.0, 5.0, 5.0, 1.0 });
-	sun.pos = { groundsize, 0.0, 0.0 };
+	sun.pos = { groundsize*3.0f, 0.0, 0.0 };
 	sun.col = { 100.0,100.0,100.0 };
 	sun.obj.M.resize(2, df);
 	sun.obj.M.push_back(glm::scale(df, glm::vec3(80.0f)));
@@ -139,72 +145,98 @@ GLvoid DefaultObj() {
 
 	LoadObj("sphere.obj", moon.obj, "8/8/8");
 	moon.obj.Set_Color({ 1.0, 1.0, 10.0, 1.0 });
-	moon.pos = { -groundsize, 0.0, 0.0 };
+	moon.pos = { groundsize*-3.0f, 0.0, 0.0 };
 	moon.col = { 0.5,0.5,100.0 };
 	moon.obj.M.resize(2, df);
 	moon.obj.M.push_back(glm::scale(df, glm::vec3(40.0f)));
-
-
-	/*coord*/
-	{
-		Vertex V;
-		GLfloat sizex = screen.size_of_world[0] * 0.8f;
-		GLfloat sizey = screen.size_of_world[1] * 0.8f;
-		GLfloat sizez = screen.size_of_world[2] * 0.8f;
-		constexpr int VofC{ 100 };
-		constexpr int dd{ VofC - 1 };
-		constexpr int iy = 2 * VofC;
-		constexpr int iz = 3 * VofC;
-		for (GLfloat i = 0; i < iz; i++) {
-			if (i < VofC) {
-				V.col = glm::vec4(0.8f, 0.0f, 0.0f, 1.0f);
-				V.pos = glm::vec3(-sizex + 2 * i * sizex / dd, 0.0f, 0.0f);
-			}
-			else if (i < iy) {
-				V.col = glm::vec4(0.0f, 0.8f, 0.0f, 1.0f);
-				V.pos = glm::vec3(0.0f, -sizey + 2 * (i - VofC) * sizey / dd, 0.0f);
-			}
-			else {
-				V.col = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
-				V.pos = glm::vec3(0.0f, 0.0f, -sizez + 2 * (i - iy) * sizez / dd);
-			}
-			coordinate.objData.vertices.push_back(V);
-			coordinate.objData.verIndices.push_back(i);
-		}
-		coordinate.shape = GL_LINES;
-		InitBuffer(coordinate);
-	}
 }
 GLvoid MakeShape() {
 	plane.init();
 	{
 		for (int i = 0; i < buildingnum; i++) {
-			LoadObj("apartment.obj", building[i], "8/8/8");
-			building[i].Set_Color({ 0.5f,0.5f,GLfloat(rand() % 10) / 10.0f,1.0f });
-			building[i].M.resize(3, df);
-			building[i].M.at(2) = glm::scale(df, glm::vec3(10.0f));
-			building[i].M.at(1) = glm::rotate(df,glm::radians(GLfloat(rand()%360)), {0.0,1.0,0.0});
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,ground_floor,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			LoadObj("apartment.obj", building[0][i], "8/8/8");
+			building[0][i].Set_Color({ 0.5f,0.5f,GLfloat(rand() % 10) / 10.0f,1.0f });
+			building[0][i].M.resize(3, df);
+			building[0][i].M.at(2) = glm::scale(df, glm::vec3(10.0f));
+			building[0][i].M.at(1) = glm::rotate(df,glm::radians(GLfloat(rand()%360)), {0.0,1.0,0.0});
+			building[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,ground_floor,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
 		for (int i = 0; i < cloudnum; i++) {
-			LoadObj("cloud.obj", cloud[i], "8/8/8");
-			cloud[i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
-			cloud[i].M.resize(3, df);
-			cloud[i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
-			cloud[i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-			cloud[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			LoadObj("cloud.obj", cloud[0][i], "8/8/8");
+			cloud[0][i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
+			cloud[0][i].M.resize(3, df);
+			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
-		LoadObj("cube.txt", ground, "8/8/8");
-		LoadTexture(ground, "grass.jpg", 512, 512, 3);
-		ground.M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
-		ground.M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
+		for (int i = 0; i < 50; i++) {
+			LoadObj("monster.obj", monster[0][i], "8/8/8");
+			monster[0][i].Set_Color({ 1.0f,0.0f,0.0f,1.0f });
+			monster[0][i].M.resize(3, df);
+			monster[0][i].M.at(2) = glm::scale(df, glm::vec3(5.0f));
+			monster[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			monster[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+		}
+	}
+	{
+		LoadObj("cube.txt", ground[0], "8/8/8");
+		LoadTexture(ground[0], "grass.jpg", 512, 512, 3);
+		ground[0].M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
+		ground[0].M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
 	}
 	/**/
+	MakeIM();
 };
+GLvoid MakeIM() {
+	/*
+			1 2 3
+		^	4 0 5
+		z	6 7 8
+			x >
+	
+	*/
+	constexpr GLfloat size{ groundsize * 2.0f };
+	glm::mat4 tr[IM]{
+		glm::mat4(1.0f),
+		glm::translate(df,{-size,0.0,size}),
+		glm::translate(df,{0.0,0.0,size}),
+		glm::translate(df,{size,0.0,size}),
+
+		glm::translate(df,{-size,0.0,0.0}),
+		glm::translate(df,{size,0.0,0.0}),
+
+		glm::translate(df,{-size,0.0,-size}),
+		glm::translate(df,{0.0,0.0,-size}),
+		glm::translate(df,{size,0.0,-size}),
+	};
+
+	for (int im = 1; im < IM; im++) {
+		for (int j = 0; j < buildingnum; j++) {
+			building[im][j] = building[0][j];
+			building[im][j].M.at(0) *= tr[im];
+		}
+	}
+	for (int im = 1; im < IM; im++) {
+		for (int j = 0; j < cloudnum; j++) {
+			cloud[im][j] = cloud[0][j];
+			cloud[im][j].M.at(0) *= tr[im];
+		}
+	}
+	for (int im = 1; im < IM; im++) {
+		for (int j = 0; j < 50; j++) {
+			monster[im][j] = monster[0][j];
+			monster[im][j].M.at(0) *= tr[im];
+		}
+	}
+	for (int im = 1; im < IM; im++) {
+		ground[im] = ground[0];
+		ground[im].M.at(0) *= tr[im];
+	}
+}
 
 
 bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
@@ -218,8 +250,7 @@ bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
 	else return false;
 }
 /*그리기 함수*/
-GLvoid drawScene() {
-	/*기본 배경*/
+GLvoid Set_draw() {
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderID);
@@ -239,11 +270,14 @@ GLvoid drawScene() {
 	glUniform3f(specLoc, sun.spec.r, sun.spec.g, sun.spec.b);
 	glUniform1i(texLoc, 0);
 	glUniform1i(light_numLoc, LIGHT::light_num);
+}
+GLvoid drawScene() {
+	/*기본 배경*/
+	Set_draw();
 
-	//std::cout << light_num;
+	/*그리기 시작*/
 	std::vector<Obj*> Alpha_objs;
 	Alpha_objs.reserve(16);
-	/*그리기 시작*/
 	{
 		glFrontFace(GL_CW);
 		drawObj(world);
@@ -253,13 +287,25 @@ GLvoid drawScene() {
 		/*불투명*/
 		drawObj(sun.obj);
 		drawObj(moon.obj);
-		drawObj(ground);
-		for (int i = 0; i < buildingnum; i++) {
-			drawObj(building[i]);
+		for (int im = 0; im < IM; im++) {
+			drawObj(ground[im]);
 		}
-		for (int i = 0; i < cloudnum; i++) {
-			drawObj(cloud[i]);
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < buildingnum; i++) {
+				drawObj(building[im][i]);
+			}
 		}
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < cloudnum; i++) {
+				drawObj(cloud[im][i]);
+			}
+		}
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < 50; i++) {
+				drawObj(monster[im][i]);
+			}
+		}
+
 		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
 			drawObj(i->obj);
 		}
@@ -285,8 +331,6 @@ GLvoid drawScene() {
 	glutSwapBuffers();
 }
 
-
-
 /*이벤트 함수*/
 int shot_delay = 0;
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
@@ -296,6 +340,7 @@ GLvoid Timer(int value) {
 	switch (value)
 	{
 	case 0: {
+<<<<<<< HEAD
 		
 
 		if (stealth) {
@@ -314,6 +359,29 @@ GLvoid Timer(int value) {
 		}
 		
 		
+=======
+		if (timeStop == false) {
+			constexpr GLfloat light_degree{ -1.0f };
+			sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
+			sun.update();
+			if (ground_floor < sun.pos.y) {
+				GLfloat d = sun.pos.y / groundsize;
+				LIGHT::ambient = d;
+				LIGHT::ambientColor = { 1.0,d,1.0 };
+				sun.on();
+			}
+			else sun.off();
+			moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
+			moon.update();
+			if (ground_floor < moon.pos.y) {
+				LIGHT::ambient = 0.5f;
+				LIGHT::ambientColor = { 0.2,0.2,1.0 };
+				moon.on();
+			}
+			else moon.off();
+		}
+		
+>>>>>>> 06a8b54ea24f54051629cbb9eb06bc77e3f8c83e
 		glutTimerFunc(50, Timer, value);
 		break;
 	}
@@ -467,8 +535,14 @@ GLvoid Mouse(int button, int state, int x, int y) {
 	}
 }
 GLvoid Motion(int x, int y) {
+	constexpr GLfloat degree{ 5.0f };
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
-	
+	if (GLx < -0.2f) {
+		plane.Yaw(degree / (FPS / 6));
+	}
+	else if (0.2f < GLx) {
+		plane.Yaw(-degree / (FPS / 6));
+	}
 	glutPostRedisplay();
 }
 GLvoid MouseWheel(int button, int dir, int x, int y) {
@@ -562,7 +636,12 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	}
 	case '\t': {
 		for (int i = 0; i < buildingnum; i++) {
-			building[i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			building[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+		}
+		for (int m = 1; m < IM; m++) {
+			for (int i = 0; i < buildingnum; i++) {
+				building[m][i].M.at(0) = building[0][i].M.at(0);
+			}
 		}
 		break;
 	}

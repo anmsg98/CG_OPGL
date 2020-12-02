@@ -123,6 +123,31 @@ void PLANE::update_head_light(){
 }
 
 
+bool PLANE::check_horizon() {
+	bool check{ false };
+	GLfloat x{ this->pos.x };
+	GLfloat z{ this->pos.z };
+	constexpr GLfloat size{ groundsize * 2.0f };
+	if (x < -groundsize) {
+		this->pos = glm::translate(df, { size, 0.0, 0.0 }) * glm::vec4(this->pos, 1.0f);
+		check = true;
+	}
+	else if (groundsize < x) {
+		this->pos = glm::translate(df, { -size, 0.0, 0.0 }) * glm::vec4(this->pos, 1.0f);
+		check = true;
+	}
+	else if (z < -groundsize) {
+		this->pos = glm::translate(df, { 0.0, 0.0, size }) * glm::vec4(this->pos, 1.0f);
+		check = true;
+	}
+	else if (groundsize < z) {
+		this->pos = glm::translate(df, { 0.0, 0.0, -size }) * glm::vec4(this->pos, 1.0f);
+		check = true;
+	}
+	return check;
+}
+
+
 void PLANE::update() {
 	//ver 2 go view ¼ø¼­
 	this->view();
@@ -131,6 +156,7 @@ void PLANE::update() {
 	this->setPos();
 	this->set_speed(-0.03f);
 	this->update_head_light();
+	if (this->check_horizon())std::cout << "sdsd";
 	//ver 3
 	//this->reRoll();
 }

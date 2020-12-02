@@ -6,7 +6,7 @@ in vec2 v_texCoord;
 in vec4 v_color;
 in vec3 fragPos;
 
-out vec4 gl_FragColor;
+out vec4 FragColor;
 
 uniform vec3 lightColor[MAX_LIGHTS];
 uniform vec3 lightPos[MAX_LIGHTS];
@@ -27,8 +27,8 @@ uniform int light_num;
 
 float attenuation(vec3 att_lightPos){
 	float constant = 1.0f;
-	float linear = 0.000035f;
-	float quadratic = 0.0000002f;
+	float linear = 0.00005f;
+	float quadratic = 0.000002f;
 	float dist =distance(fragPos,att_lightPos);
 	float under = constant + linear*dist + quadratic*dist*dist;
 	return 1.0/under;
@@ -79,5 +79,5 @@ void main(void)
 	//result = result/light_num; //최대밝기 제한시 해제
 	result = result + ambient*v_color.rgb;
 	if(use_tex==1){result = vec3(texture(texture1, v_texCoord)) * result;}
-	gl_FragColor = vec4(result,v_color.a);
+	FragColor = vec4(result,v_color.a);
 }

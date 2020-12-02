@@ -27,6 +27,7 @@ struct Obj {
 	GLenum drawmode{ GLU_FILL };
 	GLenum shape{ GL_TRIANGLES };
 	std::vector<glm::mat4> M;
+
 	glm::mat4 world_M();
 	void DelObj();
 	void Set_Alpha(const GLfloat alpha);
