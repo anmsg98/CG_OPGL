@@ -169,7 +169,7 @@ GLvoid MakeShape() {
 			cloud[0][i].M.resize(3, df);
 			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
 			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+10000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
@@ -301,7 +301,7 @@ GLvoid drawScene() {
 			}
 		}
 		for (int im = 0; im < IM; im++) {
-			for (int i = 0; i < 50; i++) {
+			for (int i = 0; i < 1; i++) {
 				drawObj(monster[im][i]);
 			}
 		}
@@ -340,7 +340,6 @@ GLvoid Timer(int value) {
 	switch (value)
 	{
 	case 0: {
-<<<<<<< HEAD
 		
 
 		if (stealth) {
@@ -359,29 +358,6 @@ GLvoid Timer(int value) {
 		}
 		
 		
-=======
-		if (timeStop == false) {
-			constexpr GLfloat light_degree{ -1.0f };
-			sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
-			sun.update();
-			if (ground_floor < sun.pos.y) {
-				GLfloat d = sun.pos.y / groundsize;
-				LIGHT::ambient = d;
-				LIGHT::ambientColor = { 1.0,d,1.0 };
-				sun.on();
-			}
-			else sun.off();
-			moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
-			moon.update();
-			if (ground_floor < moon.pos.y) {
-				LIGHT::ambient = 0.5f;
-				LIGHT::ambientColor = { 0.2,0.2,1.0 };
-				moon.on();
-			}
-			else moon.off();
-		}
-		
->>>>>>> 06a8b54ea24f54051629cbb9eb06bc77e3f8c83e
 		glutTimerFunc(50, Timer, value);
 		break;
 	}
