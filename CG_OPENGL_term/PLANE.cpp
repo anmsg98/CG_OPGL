@@ -1,4 +1,5 @@
 #include"PLANE.h"
+#include"texture_sunkue.h"
 
 PLANE plane;
 #define ROOT2 1.41421
@@ -15,8 +16,8 @@ void PLANE::init() {
 	this->obj.M.at(2) = glm::scale(df, glm::vec3(0.25f));
 	this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
 	this->setPos();
-	this->default_color();
-	this->head_light.col = { 1.0,1.0,1.0 };
+	LoadTexture(this->obj, "red.jpg", 512, 512, 3);
+	this->head_light.col = { 2.0,2.0,2.0 };
 	this->head_light.use_spot = true;
 }
 
@@ -150,8 +151,8 @@ bool PLANE::check_horizon() {
 
 void PLANE::update() {
 	//ver 2 go view ¼ø¼­
-	this->view();
 	this->go();
+	this->view();
 
 	this->setPos();
 	this->set_speed(-0.03f);
