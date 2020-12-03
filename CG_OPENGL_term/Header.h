@@ -20,7 +20,8 @@ constexpr glm::mat4 df(1.0f);
 constexpr int buildingnum{ 50 };
 constexpr int cloudnum{ 100 };
 constexpr float ground_floor{ 0.0f };
-constexpr GLfloat groundsize{ 10000.0f };
+// 10000.0f
+constexpr GLfloat groundsize{ 20000.0f };
 #endif 
 
 /*헤더 헤더*/

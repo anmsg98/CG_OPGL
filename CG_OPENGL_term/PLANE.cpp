@@ -17,7 +17,7 @@ void PLANE::init() {
 	this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
 	this->setPos();
 	LoadTexture(this->obj, "red.jpg", 512, 512, 3);
-	this->head_light.col = { 2.0,2.0,2.0 };
+	this->head_light.col = { 1.0,1.0,1.0 };
 	this->head_light.use_spot = true;
 }
 
@@ -157,7 +157,7 @@ void PLANE::update() {
 	this->setPos();
 	this->set_speed(-0.03f);
 	this->update_head_light();
-	if (this->check_horizon())std::cout << "sdsd";
+	this->check_horizon();
 	//ver 3
 	//this->reRoll();
 }
