@@ -38,8 +38,12 @@ struct bullet_ {
 	unsigned int life{ 100 }; 
 };
 Obj world;
+<<<<<<< HEAD
 Obj score;
 Obj ground[IM], building[IM][buildingnum], cloud[IM][cloudnum];
+=======
+Obj ground[IM], building[IM][buildingnum], cloud[IM][cloudnum], monster[IM][50];
+>>>>>>> origin/master
 LIGHT sun, moon;
 std::vector<bullet_> bullet;
 
@@ -170,7 +174,21 @@ GLvoid MakeShape() {
 			cloud[0][i].M.resize(3, df);
 			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
 			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+<<<<<<< HEAD
 			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+=======
+			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%800)+10000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+		}
+	}
+	{
+		for (int i = 0; i < 50; i++) {
+			LoadObj("monster.obj", monster[0][i], "8/8/8");
+			monster[0][i].Set_Color({ 1.0f,0.0f,0.0f,1.0f });
+			monster[0][i].M.resize(3, df);
+			monster[0][i].M.at(2) = glm::scale(df, glm::vec3(5.0f));
+			monster[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			monster[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+>>>>>>> origin/master
 		}
 	}
 	{
@@ -218,6 +236,12 @@ GLvoid MakeIM() {
 		for (int j = 0; j < cloudnum; j++) {
 			cloud[im][j] = cloud[0][j];
 			cloud[im][j].M.at(0) *= tr[im];
+		}
+	}
+	for (int im = 1; im < IM; im++) {
+		for (int j = 0; j < 50; j++) {
+			monster[im][j] = monster[0][j];
+			monster[im][j].M.at(0) *= tr[im];
 		}
 	}
 	for (int im = 1; im < IM; im++) {
@@ -288,6 +312,11 @@ GLvoid drawScene() {
 				drawObj(cloud[im][i]);
 			}
 		}
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < 1; i++) {
+				drawObj(monster[im][i]);
+			}
+		}
 
 		for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
 			drawObj(i->obj);
@@ -315,6 +344,7 @@ GLvoid drawScene() {
 }
 
 /*이벤트 함수*/
+int shot_delay = 0;
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
 bool up, down, left, right, L_drag, R_drag;
 GLvoid Timer(int value) {
@@ -322,16 +352,17 @@ GLvoid Timer(int value) {
 	switch (value)
 	{
 	case 0: {
-		if (timeStop == false) {
-			constexpr GLfloat light_degree{ -1.0f };
-			sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
-			sun.update();
-			if (ground_floor < sun.pos.y) {
-				GLfloat d = sun.pos.y / groundsize;
-				LIGHT::ambient = d;
-				LIGHT::ambientColor = { 1.0,d,1.0 };
-				sun.on();
+		
+
+		if (stealth) {
+			constexpr int tm{ 50 };
+			constexpr int tm2{ 25 };
+			static int time{ tm };
+			if(tm2<time)plane.Stealth(true);
+			else if(time%2) {
+				plane.Stealth(true);
 			}
+<<<<<<< HEAD
 			else sun.off();
 			moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
 			moon.update();
@@ -339,15 +370,22 @@ GLvoid Timer(int value) {
 				LIGHT::ambient = 0.6f;
 				LIGHT::ambientColor = { 0.3,0.3,1.0 };
 				moon.on();
+=======
+			else {
+				plane.Stealth(false);
+>>>>>>> origin/master
 			}
-			else moon.off();
+			time--;
+			if (time < 0)stealth = false, time = tm;
 		}
+		
 		
 		glutTimerFunc(50, Timer, value);
 		break;
 	}
 	case 1: {
 		/**/
+<<<<<<< HEAD
 		if (bl_shot) {
 			bullet.push_back(bullet_());;
 			bullet_* a = &(bullet.back());
@@ -371,31 +409,76 @@ GLvoid Timer(int value) {
 			if (i->life == 0) {
 				trashcan.reserve(1);
 				trashcan.push_back(i);
+=======
+		shot_delay = (shot_delay + 1) % 5; 
+		if (shot_delay == 0) {
+			if (bl_shot) {
+				bullet.push_back(bullet_());;
+				bullet_* a = &(bullet.back());
+				LoadObj("sphere.obj", a->obj, "8/8/8");
+				a->obj.M.resize(3, df);
+				// 총알 머리 = 뱅기 머리.
+				a->obj.M[2] = glm::scale(df, { 0.1,0.1,1.0 });
+				// 총알 회전 == 뱅기 회전.
+				a->obj.M[1] = plane.obj.M[1];
+				a->obj.M[0] = plane.obj.M[0];
+				a->obj.Set_Color({ 100.0f,100.0f,100.0f,1.0f });
+
+				a->dir = -1.0f * camera.Dir();
+				a->obj.M[0] *= glm::translate(df, a->dir);
+				//update 에서 함 b->obj.M[0] = plane.obj.M[0] * glm::translate(df, { plane.nDir() * -3.0f });
+>>>>>>> origin/master
 			}
 		}
-		for (std::vector<std::vector<bullet_>::iterator>::iterator i = trashcan.begin(), e = trashcan.end(); i != e; i++) {
-			(*i)->obj.DelObj();
-			bullet.erase(*i);
-		}
+			std::vector<std::vector<bullet_>::iterator> trashcan;
+			for (std::vector<bullet_>::iterator i = bullet.begin(), e = bullet.end(); i != e; i++) {
+				i->obj.M[0] *= glm::translate(df, i->dir * (plane.maxspeed + 10.0f));
+				i->life -= 1;
+				if (i->life == 0) {
+					trashcan.reserve(1);
+					trashcan.push_back(i);
+				}
+			}
+			for (std::vector<std::vector<bullet_>::iterator>::iterator i = trashcan.begin(), e = trashcan.end(); i != e; i++) {
+				(*i)->obj.DelObj();
+				bullet.erase(*i);
+			}
+		
 
 		/**/
 		if (up) {
+<<<<<<< HEAD
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 6)), camera.Right());
+=======
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS/12)), camera.Right());
+>>>>>>> origin/master
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (down) {
+<<<<<<< HEAD
 			glm::mat4 R = glm::rotate(df, glm::radians(degree / (FPS / 6)), camera.Right());
+=======
+			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 12)), camera.Right());
+>>>>>>> origin/master
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (right) {
+<<<<<<< HEAD
 			glm::mat4 R = glm::rotate(df, glm::radians(degree / (FPS / 6)), camera.Up());
+=======
+			glm::mat4 R = glm::rotate(df, glm::radians(degree/(FPS / 12)), camera.Up());
+>>>>>>> origin/master
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
 		if (left) {
+<<<<<<< HEAD
 			glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 6)), camera.Up());
+=======
+			glm::mat4 R = glm::rotate(df, glm::radians(-degree/(FPS / 12)), camera.Up());
+>>>>>>> origin/master
 			plane.viewMat = R * plane.viewMat;
 			camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 		}
@@ -416,17 +499,37 @@ GLvoid Timer(int value) {
 		}
 		if (P_RL) {
 			plane.Roll(degree / (FPS / 24));
-			//plane.Pitch(degree / (FPS / 4.8));
+			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_RR) {
 			plane.Roll(-degree / (FPS / 24));
-			//plane.Pitch(degree / (FPS / 4.8));
+			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_PU) {
 			plane.Pitch(degree / (FPS / 4.8));
 		}
 		if (P_PD) {
 			plane.Pitch(-degree / (FPS / 4.8));
+		}
+		if (timeStop == false) {
+			constexpr GLfloat light_degree{ -1.0f };
+			sun.pos = glm::rotate(df, glm::radians(light_degree / (FPS/ 24.0f)), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
+			sun.update();
+			if (ground_floor < sun.pos.y) {
+				GLfloat d = sun.pos.y / groundsize;
+				LIGHT::ambient = d;
+				LIGHT::ambientColor = { 1.0,d,1.0 };
+				sun.on();
+			}
+			else sun.off();
+			moon.pos = glm::rotate(df, glm::radians(light_degree / (FPS / 24.0f)), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
+			moon.update();
+			if (ground_floor < moon.pos.y) {
+				LIGHT::ambient = 0.3f;
+				LIGHT::ambientColor = { 0.2,0.2,1.0 };
+				moon.on();
+			}
+			else moon.off();
 		}
 		plane.update();
 
