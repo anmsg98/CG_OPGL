@@ -150,6 +150,9 @@ bool PLANE::check_horizon() {
 
 bool PLANE::check_coll(glm::vec3 a, glm::vec3 b) {
 	// x, y, z 높이 전좌하 후우상		(a,b)(x,y,z)[<,<,<][7,0]
+	if (b.x < a.x)std::swap(a.x, b.x);
+	if (b.y < a.y)std::swap(a.y, b.y);
+	if (b.z < a.z)std::swap(a.z, b.z);
 	glm::vec3 p = this->pos, coll = this->coll_size;
 	glm::mat4 M = this->obj.world_M();
 	glm::vec3 pos[9]{

@@ -487,7 +487,7 @@ GLvoid Timer(int value) {
 						//////////////////////
 						plane.color_type++;
 						ChangeCol(plane.obj, plane.color_type);
-						std::cout << "!\n";
+						//std::cout << "!\n";
 					}
 				}
 			}
@@ -499,7 +499,7 @@ GLvoid Timer(int value) {
 						//////////////////////
 						plane.color_type++;
 						ChangeCol(plane.obj, plane.color_type);
-						std::cout << "?\n";
+						//std::cout << "?\n";
 					}
 				}
 			}
