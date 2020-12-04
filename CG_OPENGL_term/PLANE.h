@@ -14,6 +14,8 @@ struct PLANE {
 	static glm::vec3 grav;
 	Obj obj;
 	glm::vec3 pos{ 0.0,1000.0,0.0 };
+	glm::vec3 coll_size{ 2.0f,1.0f,2.0f };
+
 	COLOR_ color_type{ COLOR_::RED };
 
 	glm::vec3 head{ 0.0,0.0,-1.0 };
@@ -62,10 +64,7 @@ struct PLANE {
 
 	void view_dist_add(GLfloat dist);
 
-	bool check_coll(glm::vec3 a,glm::vec3 b) {
-		// x,y , z 높이	전좌하 후우상
-		return false;
-	}
+	bool check_coll(glm::vec3 a, glm::vec3 b);
 	
 	bool check_horizon();
 

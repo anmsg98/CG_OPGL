@@ -61,6 +61,7 @@ struct Obj {
 
 
 GLvoid ChangeCol(Obj& o, COLOR_ c);
-
+GLfloat* coll_box(Obj& obj);
+void cout_coll_box(Obj& obj);
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]);
 GLvoid drawObj(Obj& o);

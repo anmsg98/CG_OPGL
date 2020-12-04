@@ -53,6 +53,39 @@ void Obj::Set_Color(const glm::vec4& color) {
 }
 
 
+
+GLfloat* coll_box(Obj& obj){
+	glm::vec3 min, max;
+	min = obj.objData.vertices.at(1).pos;
+	max = obj.objData.vertices.at(1).pos;
+	for (std::vector<Vertex>::iterator i{ obj.objData.vertices.begin() }, \
+		e{ obj.objData.vertices.end() }; i != e; i++) {
+		if (i->pos.x < min.x)min.x = i->pos.x;
+		if (i->pos.z < min.y)min.y = i->pos.y;
+		if (i->pos.y < min.z)min.z = i->pos.z;
+		if (max.x < i->pos.x)max.x = i->pos.x;
+		if (max.y < i->pos.y)max.y = i->pos.y;
+		if (max.z < i->pos.z)max.z = i->pos.z;
+	}
+	static GLfloat res[6];
+	res[0] = min.x;
+	res[1] = min.y;
+	res[2] = min.z;
+	res[3] = max.x;
+	res[4] = max.y;
+	res[5] = max.z;
+	return res;
+}
+void cout_coll_box(Obj& obj) {
+	GLfloat* res = coll_box(obj);
+	std::cout << "min x : " << res[0] << "\n";
+	std::cout << "min y : " << res[1] << "\n";
+	std::cout << "min z : " << res[2] << "\n";
+	std::cout << "max x : " << res[3] << "\n";
+	std::cout << "max y : " << res[4] << "\n";
+	std::cout << "max z : " << res[5] << "\n";
+}
+
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) 
 {
 	std::string OBJ{ "obj/" };

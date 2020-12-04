@@ -15,7 +15,7 @@ namespace timer {
 		d_start = clock();
 	}
 
-	void start_mas(const char message[] = "timer start :") {
+	void start_mes(const char message[] = "timer start :") {
 		std::cout << message << '\n';
 		d_start = clock();
 	}
@@ -25,7 +25,7 @@ namespace timer {
 		return clock() - d_start;
 	}
 
-	void end_mas() {
+	void end_mes() {
 		std::cout <<"timer end : "<< timer::end() << " ms\n";
 	}
 }

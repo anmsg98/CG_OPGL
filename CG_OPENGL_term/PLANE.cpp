@@ -148,16 +148,42 @@ bool PLANE::check_horizon() {
 	return check;
 }
 
+bool PLANE::check_coll(glm::vec3 a, glm::vec3 b) {
+	// x, y, z 높이 전좌하 후우상		(a,b)(x,y,z)[<,<,<][7,0]
+	glm::vec3 p = this->pos, coll = this->coll_size;
+	glm::mat4 M = this->obj.world_M();
+	glm::vec3 pos[9]{
+		p + glm::vec3{M* glm::vec4{  coll.x, coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M* glm::vec4{ -coll.x, coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M* glm::vec4{  coll.x,-coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M* glm::vec4{ -coll.x,-coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M* glm::vec4{  coll.x, coll.y,-coll.z, 1.0 }},
+		p + glm::vec3{M* glm::vec4{ -coll.x, coll.y,-coll.z, 1.0 }},
+		p + glm::vec3{M* glm::vec4{  coll.x,-coll.y,-coll.z, 1.0 }},
+		p + glm::vec3{M* glm::vec4{ -coll.x,-coll.y,-coll.z, 1.0 }},
+		p
+	};
+
+	for (int i = 0; i < 9; i++) {
+		if ((pos[i].x < b.x && a.x < pos[i].x) && \
+			(pos[i].y < b.y && a.y < pos[i].y) && \
+			(pos[i].z < b.z && a.z < pos[i].z)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 void PLANE::update() {
 	//ver 2 go view 순서
 	this->go();
 	this->view();
 
-	this->setPos();
 	this->set_speed(-0.03f);
 	this->update_head_light();
 	this->check_horizon();
+
+	this->setPos();
 	//ver 3
 	//this->reRoll();
 }

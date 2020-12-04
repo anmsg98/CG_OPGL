@@ -7,6 +7,7 @@
 #include"PLANE.h"
 #include"screen.h"
 #include"Alpha_blending.h"
+#include"debug.h"
 
 constexpr int FPS{ 60 };
 constexpr int IM{ 9 };
@@ -170,6 +171,8 @@ GLvoid MakeShape() {
 			building[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
 			building[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
+		//std::cout << "==building==\n";
+		//cout_coll_box(building[0][0]);
 	}
 	{
 		for (int i = 0; i < cloudnum; i++) {
@@ -178,7 +181,7 @@ GLvoid MakeShape() {
 			cloud[0][i].M.resize(3, df);
 			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
 			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand()%4000)+1000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand()%4000)+1000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
@@ -190,15 +193,18 @@ GLvoid MakeShape() {
 			monster[0][i].obj.M.resize(3, df);
 			monster[0][i].obj.M.at(2) = glm::scale(df, glm::vec3(5.0f));
 			monster[0][i].obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-			monster[0][i].obj.M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			monster[0][i].obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 			if (temp == monsternum_by_col) {
 				tC++;
 				temp = 0;
 			}
 			monster[0][i].color_type = tC;
+			//std::cout << temp << '\n';
 			ChangeCol(monster[0][i].obj, monster[0][i].color_type);
 			temp++;
 		}
+		//std::cout << "==monster==\n";
+		//cout_coll_box(monster[0][0].obj);
 	}
 	{
 		LoadObj("cube.txt", ground[0], "8/8/8");
@@ -470,6 +476,35 @@ GLvoid Timer(int value) {
 			plane.update();
 		/* camera */
 		}
+		/* check_coll */
+		{
+			//timer::start_mes(); //5-7 // coll-> [10 < ] ms
+			{
+				constexpr glm::vec4 a{ -32.4,18.2,-12.5 ,1.0f }, b{ 32.4,115.33,18.63 ,1.0f };
+				for (int i = 0; i < buildingnum; i++) {
+					glm::mat4 M{ building[0][i].world_M() };
+					if (plane.check_coll(M * a, M * b)) {
+						//////////////////////
+						plane.color_type++;
+						ChangeCol(plane.obj, plane.color_type);
+						std::cout << "!\n";
+					}
+				}
+			}
+			{
+				constexpr glm::vec4 a{ -12.8,-15.7,-5.0 ,1.0f }, b{ 12.8,20.0,13.3,1.0f };
+				for (std::vector<monster_>::iterator i{ monster[0].begin() }, e{ monster[0].end() }; i != e; i++) {
+					glm::mat4 M{ i->obj.world_M() };
+					if (plane.check_coll(M * a, M * b)) {
+						//////////////////////
+						plane.color_type++;
+						ChangeCol(plane.obj, plane.color_type);
+						std::cout << "?\n";
+					}
+				}
+			}
+			//timer::end_mes();
+		}
 		/* day, whether */
 		{
 			if (timeStop == false) {
@@ -692,7 +727,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	}
 	case '3': {
 		plane.head_light.spot_theta = 3.0f;
-		plane.head_light.col = glm::vec3(2.0f);
+		plane.head_light.col = glm::vec3(1.0f);
 		break;
 	}
 	case 'C':

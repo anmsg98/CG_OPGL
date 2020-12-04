@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="Alpha_blending.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="debug.h" />
     <ClInclude Include="Handle_evnts.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="light.h" />
