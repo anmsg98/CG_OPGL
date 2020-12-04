@@ -64,18 +64,20 @@ void PLANE::reRoll() {
 	GLfloat cos = glm::dot(glm::normalize(PLANE::grav), glm::normalize(this->Right()));
 	GLfloat degree = glm::degrees(glm::acos(cos)) - 90.0f;
 
-	this->Roll(-degree / 30.0f);
+	// ABCDEF reroll speed
+	constexpr float c{ 30.0f };
+
+	this->Roll(-degree / c);
 	if (abs(degree) < 0.01f) {
 		this->Roll(-degree);
 	}
 }
 
 void PLANE::go() {
+	// ABCDEF 4,6 speed
 	constexpr GLfloat rollspeed{ -2.0f };
 	GLfloat cos = glm::dot(glm::normalize(PLANE::grav), glm::normalize(this->Right()));
 	GLfloat degree = glm::degrees(glm::acos(cos)) - 90.0f;
-	//ver 3.2 rolling move
-	//GLfloat t = glm::sin(turn_degree) * rollspeed;
 	GLfloat t = glm::sin(glm::radians(degree)) * rollspeed * speed;
 	glm::vec3 D{ plane.Right() };
 
