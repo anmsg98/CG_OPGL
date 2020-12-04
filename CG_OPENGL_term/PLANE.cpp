@@ -3,8 +3,7 @@
 
 PLANE plane;
 #define ROOT2 1.41421
-//이 값은 속도에 비례해야 자연스러우나, 생략.
-GLclampf PLANE::recover_roll{ 0.05f };
+
 //중력장
 glm::vec3 PLANE::grav{ 0.0,-1.0,0.0 };
 
@@ -56,30 +55,34 @@ void PLANE::Pitch(GLfloat degree) {
 	update_coor(m);
 }
 void PLANE::Roll(GLfloat degree) {
-	this->turn_degree += degree;
 	glm::mat4 m = roll_(degree);
 	obj.M.at(1) = m * obj.M.at(1);
 	update_coor(m);
 }
 
 void PLANE::reRoll() {
-	this->Roll( -this->turn_degree * PLANE::recover_roll);
+	GLfloat cos = glm::dot(glm::normalize(PLANE::grav), glm::normalize(this->Right()));
+	GLfloat degree = glm::degrees(glm::acos(cos)) - 90.0f;
 
-	if (abs(this->turn_degree) < 0.01f) {
-		this->Roll(-this->turn_degree);
+	this->Roll(-degree / 30.0f);
+	if (abs(degree) < 0.01f) {
+		this->Roll(-degree);
 	}
-	//std::cout << turn_degree << '\t';
 }
 
 void PLANE::go() {
 	constexpr GLfloat rollspeed{ -2.0f };
+	GLfloat cos = glm::dot(glm::normalize(PLANE::grav), glm::normalize(this->Right()));
+	GLfloat degree = glm::degrees(glm::acos(cos)) - 90.0f;
 	//ver 3.2 rolling move
 	//GLfloat t = glm::sin(turn_degree) * rollspeed;
-	GLfloat t = glm::sin(glm::radians(turn_degree)) * rollspeed * speed;
+	GLfloat t = glm::sin(glm::radians(degree)) * rollspeed * speed;
+	glm::vec3 D{ plane.Right() };
 
-	glm::mat4 m = glm::translate(df, nDir() * -speed)  * glm::translate(df, camera.Right() * t) * glm::translate(df, PLANE::grav);
+	D.y = 0.0f;
+	D = glm::normalize(D);
 
-
+	glm::mat4 m = glm::translate(df, nDir() * -speed) * glm::translate(df, D * t) * glm::translate(df, PLANE::grav);
 	//go
 	this->pos = m * glm::vec4{ this->pos,1.0f };
 	check_area();
@@ -187,8 +190,7 @@ void PLANE::update() {
 	this->check_horizon();
 
 	this->setPos();
-	//ver 3
-	//this->reRoll();
+	this->reRoll();
 }
 
 

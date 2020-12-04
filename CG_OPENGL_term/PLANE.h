@@ -10,8 +10,9 @@
 #endif // !LIGHT_H
 
 struct PLANE {
-	static GLclampf recover_roll;
 	static glm::vec3 grav;
+	glm::vec3 roll_dir{1.0,0.0,0.0};
+
 	Obj obj;
 	glm::vec3 pos{ 0.0,1000.0,0.0 };
 	glm::vec3 coll_size{ 2.0f,1.0f,2.0f };

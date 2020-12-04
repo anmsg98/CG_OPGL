@@ -432,10 +432,10 @@ GLvoid Timer(int value) {
 		/* plane */
 		{
 			if (P_go) {
-				plane.set_speed(0.32f);
+				plane.set_speed(0.64f);
 			}
 			if (P_stop) {
-				plane.set_speed(-0.6f);
+				plane.set_speed(-2.0f);
 			}
 			if (P_YL) {
 				//ver 1
