@@ -6,6 +6,7 @@
 #pragma once
 #include<time.h>
 #include<crtdbg.h>
+#include<assert.h>
 
 namespace timer {
 	clock_t d_start{ 0 };
@@ -26,6 +27,12 @@ namespace timer {
 
 	void end_mas() {
 		std::cout <<"timer end : "<< timer::end() << " ms\n";
+	}
+}
+
+namespace assert {
+	void false_exit(bool b) {
+		assert(b);
 	}
 }
 

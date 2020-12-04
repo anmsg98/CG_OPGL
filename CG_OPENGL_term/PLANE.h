@@ -14,7 +14,8 @@ struct PLANE {
 	static glm::vec3 grav;
 	Obj obj;
 	glm::vec3 pos{ 0.0,1000.0,0.0 };
-	
+	COLOR_ color_type{ COLOR_::RED };
+
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
 	glm::vec3 up{ 0.0,1.0,0.0 };

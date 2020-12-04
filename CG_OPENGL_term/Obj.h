@@ -5,6 +5,30 @@
 #define OBJ_H
 #endif // !OBJ_H
 
+enum class COLOR_
+{
+	RED,
+	GREEN,
+	BLUE,
+	YELLOW,
+	count
+};
+
+//prefix
+inline COLOR_& operator++(COLOR_& c) {
+	typedef std::underlying_type_t<COLOR_> ut;
+	auto constexpr cnt = (ut)COLOR_::count;
+	c = COLOR_(((ut)c + 1) % cnt);
+	return c;
+}
+//postfix
+inline COLOR_ operator++(COLOR_& c, int) {
+	auto const res = c;
+	++c;
+	return res;
+}
+
+
 
 typedef GLushort Index;
 struct Vertex {
@@ -34,6 +58,9 @@ struct Obj {
 	void Set_Color(const glm::vec4& color);
 	void Reverse_nor();
 };
+
+
+GLvoid ChangeCol(Obj& o, COLOR_ c);
 
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]);
 GLvoid drawObj(Obj& o);

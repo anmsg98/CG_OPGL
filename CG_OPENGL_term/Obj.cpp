@@ -1,6 +1,29 @@
 #include"Obj.h"
 #include"shader_sunkue.h"
+#include"texture_sunkue.h"
 
+
+
+
+GLvoid ChangeCol(Obj& o, COLOR_ c) {
+	switch (c)
+	{
+	case COLOR_::RED:
+		LoadTexture(o, "red.jpg", 512, 512, 3);
+		break;
+	case COLOR_::GREEN:
+		LoadTexture(o, "green.jpg", 512, 512, 1);
+		break;
+	case COLOR_::BLUE:
+		LoadTexture(o, "blue.jpg", 512, 512, 1);
+		break;
+	case COLOR_::YELLOW:
+		LoadTexture(o, "yellow.jpg", 512, 512, 1);
+		break;
+	default:
+		break;
+	}
+}
 
 void ObjData::DelObjData() { glDeleteVertexArrays(1, &this->VAO); vertices.clear(); verIndices.clear(); }
 glm::mat4 Obj::world_M() {

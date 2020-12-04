@@ -73,7 +73,7 @@ void PLANE::reRoll() {
 
 void PLANE::go() {
 	constexpr GLfloat rollspeed{ -2.0f };
-	//ver 3.2
+	//ver 3.2 rolling move
 	//GLfloat t = glm::sin(turn_degree) * rollspeed;
 	GLfloat t = glm::sin(glm::radians(turn_degree)) * rollspeed * speed;
 
