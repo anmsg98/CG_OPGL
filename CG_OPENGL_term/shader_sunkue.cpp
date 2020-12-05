@@ -138,7 +138,7 @@ GLuint InitShader()
 }
 bool InitBuffer(Obj& obj)
 {
-	if (obj.objData.VAO != 0)glDeleteVertexArrays(1, &(obj.objData.VAO));
+	//if (obj.objData.VAO != 0)glDeleteVertexArrays(1, &(obj.objData.VAO));
 	GLuint abo;	// array buffer obj
 	GLuint ebo;	// elements bo
 	//--- Vertex Array Object »ý¼º

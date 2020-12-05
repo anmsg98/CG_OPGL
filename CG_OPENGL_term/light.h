@@ -22,7 +22,7 @@ struct LIGHT {
 	static GLfloat lights_spot_dir[MAX_LIGHTS * 3];
 
 	Obj obj;
-	glm::vec3 spec{ 0.0f,0.0f,0.0f };
+	glm::vec3 spec{ 1.0f,1.0f,1.0f };
 	glm::vec3 pos{ 0.0,0.0,0.0 };
 	glm::vec3 col{ 1.0,1.0,1.0 };
 

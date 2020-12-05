@@ -73,7 +73,7 @@ void main(void)
 			specularLight = pow(specularLight,shine);
 			vec3 specular = clamp(specularLight*lightColor[i],0.0,1.0);
 
-			result = result + vec3(diffuse*v_color.rgb+specular*spec) * attenuation(lightPos[i]);
+			result = result + vec3(diffuse*v_color.rgb) * attenuation(lightPos[i])+specular*spec;
 		}
 	}
 	//result = result/light_num; //최대밝기 제한시 해제

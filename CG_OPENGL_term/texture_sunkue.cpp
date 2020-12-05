@@ -25,6 +25,7 @@ bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int
 	stbi_uc* data = stbi_load(F, &width, &height, &numOfChannel, 0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
 	if (data == nullptr) {
 		std::cerr << "texture image error : " << file;
+		return false;
 	}
 	GLenum format;
 	switch (numOfChannel)

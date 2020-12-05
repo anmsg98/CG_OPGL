@@ -10,8 +10,8 @@ glm::vec3 PLANE::grav{ 0.0,-1.0,0.0 };
 
 void PLANE::init() {
 	// 0 Trans	1 Yaw	2 Pitch	3 Roll	4 Size
-	this->obj.M.resize(3, df);
 	LoadObj("airplane.obj", this->obj, "8/8/8");
+	this->obj.M.resize(3, df);
 	this->obj.M.at(2) = glm::scale(df, glm::vec3(0.25f));
 	this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
 	this->setPos();

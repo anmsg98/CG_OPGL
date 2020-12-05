@@ -44,12 +44,99 @@ struct monster_ {
 	COLOR_ color_type;
 };
 
+constexpr int score_minimum{ 3 };
+struct score_ {
+	Obj obj;
+	glm::vec3 pos;
+	int num;
+
+	void init() {
+		obj = Obj();
+		LoadObj("cube.txt", obj, "8/8/8");
+		obj.M.resize(3, df);
+		obj.M.at(2) = glm::scale(df, glm::vec3(1.15f));
+
+		pos = plane.pos;
+
+		set_num();
+		update();
+	}
+
+	void set_num() {
+		constexpr int d = 6 - score_minimum;
+		num = rand() % d + score_minimum;
+		update_tex();
+	}
+
+	bool add_num(int a) {
+		num += a;
+		if (num <= 0) {
+			set_num();
+			return true;
+		}
+		else if (6 < num) {
+			num = 6;
+			update_tex();
+			return true;
+		}
+		else {
+			update_tex();
+			return false;
+		}
+	}
+
+	void set_pos(glm::vec3 a) {
+		pos = a;
+	}
+
+	void update_tex() {
+		switch (num)
+		{
+		case 1: {
+			LoadTexture(obj, "face1.jpg", 512, 512, 1);
+			break;
+		}
+		case 2: {
+			LoadTexture(obj, "face2.jpg", 512, 512, 1);
+			break;
+		}
+		case 3: {
+			LoadTexture(obj, "face3.jpg", 512, 512, 1);
+			break;
+		}
+		case 4: {
+			LoadTexture(obj, "face4.jpg", 512, 512, 1);
+			break;
+		}
+		case 5: {
+			LoadTexture(obj, "face5.jpg", 512, 512, 1);
+			break;
+		}
+		case 6: {
+			LoadTexture(obj, "face6.jpg", 512, 512, 1);
+			break;
+		}
+		default:
+			std::cout << "score target error\n";
+			break;
+		}
+	}
+
+	void update() {
+		obj.M.at(0) = glm::translate(df, pos);
+		constexpr GLfloat rad = glm::radians(5.0f);
+		obj.M.at(1) *= glm::rotate(df, rad, { 0.0,1.0,0.0 });
+	}
+
+};
 /**/
-Obj world, score;
+Obj world;
 Obj ground[IM], building[IM][buildingnum], cloud[IM][cloudnum];
 std::vector<monster_> monster[IM];
+monster_ tempmonster;
 LIGHT sun, moon;
 std::vector<bullet_> bullet;
+score_ score;
 
 /*-----MAIN--*/
 int main(int argc, char** argv) {
@@ -163,11 +250,15 @@ GLvoid DefaultObj() {
 GLvoid MakeShape() {
 	plane.init();
 	{
+		Obj tempbuilding;
+		LoadObj("apartment.obj", tempbuilding, "8/8/8");
+		tempbuilding.M.resize(3, df);
+		tempbuilding.M.at(2) = glm::scale(df, glm::vec3(10.0f));
+		//tempbuilding.objData.shine = 640;
+
 		for (int i = 0; i < buildingnum; i++) {
-			LoadObj("apartment.obj", building[0][i], "8/8/8");
+			building[0][i] = tempbuilding;
 			building[0][i].Set_Color({ 0.5f,0.5f,GLfloat(rand() % 10) / 10.0f,1.0f });
-			building[0][i].M.resize(3, df);
-			building[0][i].M.at(2) = glm::scale(df, glm::vec3(10.0f));
 			building[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
 			building[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize) * 2) - groundsize,ground_floor,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
@@ -175,23 +266,30 @@ GLvoid MakeShape() {
 		//cout_coll_box(building[0][0]);
 	}
 	{
+		Obj tempcloud;
+		LoadObj("cloud.obj", tempcloud, "8/8/8");
+		tempcloud.Set_Color({ 1.0f,1.0f,1.0f,0.5f });
+		tempcloud.M.resize(3, df);
+		tempcloud.M.at(2) = glm::scale(df, glm::vec3(1.0f));
 		for (int i = 0; i < cloudnum; i++) {
-			LoadObj("cloud.obj", cloud[0][i], "8/8/8");
-			cloud[0][i].Set_Color({ 1.0f,1.0f,1.0f,0.5f });
-			cloud[0][i].M.resize(3, df);
-			cloud[0][i].M.at(2) = glm::scale(df, glm::vec3(1.0f));
+			cloud[0][i] = tempcloud;
 			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
 			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand()%4000)+1000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
-		monster[0].resize(monsternum, monster_());
+		tempmonster = monster_();
+		LoadObj("monster.obj", tempmonster.obj, "8/8/8");
+		tempmonster.obj.M.resize(3, df);
+		tempmonster.obj.M.at(2) = glm::scale(df, glm::vec3(20.0f));
+		tempmonster.obj.objData.shine = 640;
+		//tempmonster.obj.objData.vertices.clear();
+
+		monster[0].resize(monsternum);
 		COLOR_ tC{ COLOR_::RED };
 		int temp{ 0 };
 		for (int i = 0; i < monsternum; i++) {
-			LoadObj("monster.obj", monster[0].at(i).obj, "8/8/8");
-			monster[0][i].obj.M.resize(3, df);
-			monster[0][i].obj.M.at(2) = glm::scale(df, glm::vec3(5.0f));
+			monster[0].at(i) = tempmonster;
 			monster[0][i].obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
 			monster[0][i].obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 			if (temp == monsternum_by_col) {
@@ -203,6 +301,15 @@ GLvoid MakeShape() {
 			ChangeCol(monster[0][i].obj, monster[0][i].color_type);
 			temp++;
 		}
+
+		for (int i = 0; i < score.num - 3; i++) {
+			monster[0].reserve(1);
+			monster[0].push_back(tempmonster);
+			monster[0][i].obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			monster[0][i].obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			monster[0][i].color_type = plane.color_type;
+			ChangeCol(monster[0][i].obj, monster[0][i].color_type);
+		}
 		//std::cout << "==monster==\n";
 		//cout_coll_box(monster[0][0].obj);
 	}
@@ -213,10 +320,7 @@ GLvoid MakeShape() {
 		ground[0].M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
 	}
 	{
-		LoadObj("cube.txt", score, "8/8/8");
-		LoadTexture(score, "face1.jpg", 512, 512, 1);
-		score.M.resize(3, df);
-		score.M.at(2) = glm::scale(df, glm::vec3(0.15f));
+		score.init();
 	}
 	MakeIM();
 };
@@ -256,9 +360,8 @@ GLvoid MakeIM() {
 		}
 	}
 	for (int im = 1; im < IM; im++) {
-		monster[im].resize(monsternum, monster_());
+		monster[im] = monster[0];
 		for (int j = 0; j < monsternum; j++) {
-			monster[im][j] = monster[0][j];
 			monster[im][j].obj.M.at(0) *= tr[im];
 		}
 	}
@@ -313,7 +416,7 @@ GLvoid drawScene() {
 		drawObj(world);
 		glFrontFace(GL_CCW);
 		drawObj(plane.obj);
-		drawObj(score);
+		drawObj(score.obj);
 		/*불투명*/
 		drawObj(sun.obj);
 		drawObj(moon.obj);
@@ -323,11 +426,6 @@ GLvoid drawScene() {
 		for (int im = 0; im < IM; im++) {
 			for (int i = 0; i < buildingnum; i++) {
 				drawObj(building[im][i]);
-			}
-		}
-		for (int im = 0; im < IM; im++) {
-			for (int i = 0; i < cloudnum; i++) {
-				drawObj(cloud[im][i]);
 			}
 		}
 		for (int im = 0; im < IM; im++) {
@@ -343,6 +441,11 @@ GLvoid drawScene() {
 	/*alpha*/
 	/*투명 ALpha_objs 로 push 하면 정렬한 후 드로우 함*/
 	{	
+		for (int im = 0; im < IM; im++) {
+			for (int i = 0; i < cloudnum; i++) {
+				drawObj(cloud[im][i]);
+			}
+		}
 		/*
 		최적화와 정확도 문제로 사용 중단.
 
@@ -474,7 +577,6 @@ GLvoid Timer(int value) {
 				if (time < 0)stealth = false, time = tm;
 			}
 			plane.update();
-		/* camera */
 		}
 		/* check_coll */
 		{
@@ -493,13 +595,72 @@ GLvoid Timer(int value) {
 			}
 			{
 				constexpr glm::vec4 a{ -12.8,-15.7,-5.0 ,1.0f }, b{ 12.8,20.0,13.3,1.0f };
+				std::vector<std::vector<monster_>::iterator> trashcan[IM];
+				bool add{ false };
 				for (std::vector<monster_>::iterator i{ monster[0].begin() }, e{ monster[0].end() }; i != e; i++) {
 					glm::mat4 M{ i->obj.world_M() };
 					if (plane.check_coll(M * a, M * b)) {
-						//////////////////////
-						plane.color_type++;
-						ChangeCol(plane.obj, plane.color_type);
-						//std::cout << "?\n";
+
+						if (plane.color_type == i->color_type) {
+							if (score.add_num(-1)) {
+								//change color
+								constexpr int d = static_cast<int>(COLOR_::count) - 1;
+								int x = rand() % d + 1;
+								for (int i = 0; i < x; i++)	plane.color_type++;
+								ChangeCol(plane.obj, plane.color_type);
+
+								add = true;
+							}
+						}
+						else {
+							score.add_num(1);
+						}
+
+						for (int im = 0; im < IM; im++) {
+							trashcan[im].push_back(monster[im].begin() + (i - monster[0].begin()));
+						}
+
+
+						break;
+					}
+				}
+				// trashcan
+				for (int im = 0; im < IM; im++) {
+					for (std::vector<std::vector<monster_>::iterator>::iterator i = trashcan[im].begin(), e = trashcan[im].end(); i != e; i++) {
+						monster[im].erase(*i);
+
+					}
+				}
+				//add monster
+				if (add) {
+					monster[0].reserve(score.num);
+					for (int i = 0; i < score.num; i++) {
+						monster[0].push_back(tempmonster);
+						monster[0].back().obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+						monster[0].back().obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+						monster[0].back().color_type = plane.color_type;
+						ChangeCol(monster[0].back().obj, monster[0].back().color_type);
+					}
+					constexpr GLfloat size{ groundsize * 2.0f };
+					static glm::mat4 tr[IM]{
+						glm::mat4(1.0f),
+						glm::translate(df,{-size,0.0,size}),
+						glm::translate(df,{0.0,0.0,size}),
+						glm::translate(df,{size,0.0,size}),
+						
+						glm::translate(df,{-size,0.0,0.0}),
+						glm::translate(df,{size,0.0,0.0}),
+
+						glm::translate(df,{-size,0.0,-size}),
+						glm::translate(df,{0.0,0.0,-size}),
+						glm::translate(df,{size,0.0,-size}),
+					};
+					for (int im = 1; im < IM; im++) {
+						monster[im] = monster[0];
+						for (int j = 0; j < monster[0].size(); j++) {
+							monster[im][j].obj.M.at(0) *= tr[im];
+						}
+						//monster[im].insert(monster[im].end(), monster[0].end() - score.num, monster[0].end());
 					}
 				}
 			}
@@ -529,15 +690,16 @@ GLvoid Timer(int value) {
 			}
 		}
 		////////
-		/*
-		score.M.at(0) = glm::translate(df, camera.EYE + -camera.Dir() * 20.0f);
-		GLfloat cosine = glm::dot(camera.EYE, camera.AT) / (glm::length(camera.EYE) * glm::length(camera.AT));
-		if (abs(cosine) > 1.0f)std::cout << "error!!!!";
-		GLfloat theta = glm::acos(cosine);
 
-		glm::vec3 coor = glm::cross(camera.EYE, camera.AT);
-		score.M.at(1) = glm::rotate(df, theta, coor);
-		*/
+		{
+			static GLfloat d = 0.0;
+			d += 0.2f;
+			glm::vec3 D{ plane.Right() };
+			D.y = 0.0f;
+			D = glm::normalize(D);
+			score.set_pos(plane.pos + plane.nDir() * 18.0f + plane.grav * 5.0f + D * 2.0f * sin(d));
+			score.update();
+		}
 		glutTimerFunc(1200 / FPS, Timer, value);
 		break;
 	}

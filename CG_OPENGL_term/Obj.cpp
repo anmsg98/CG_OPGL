@@ -187,6 +187,6 @@ GLvoid drawObj(Obj& o) {
 	glPolygonMode(GL_FRONT, o.drawmode);
 	if (o.use_texture) { glActiveTexture(GL_TEXTURE0), glBindTexture(GL_TEXTURE_2D, o.texture); }
 	glDrawElements(o.shape, o.objData.verIndices.size(), GL_UNSIGNED_SHORT, 0);
-	glBindVertexArray(0);
+	//glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
