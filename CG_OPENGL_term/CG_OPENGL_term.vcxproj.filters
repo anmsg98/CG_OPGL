@@ -33,9 +33,6 @@
     <ClInclude Include="texture_sunkue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Handle_evnts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PLANE.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -49,6 +46,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,9 +68,6 @@
     <ClCompile Include="texture_sunkue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Handle_evnts.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PLANE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -81,6 +78,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Alpha_blending.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -8,6 +8,7 @@
 #include"screen.h"
 #include"Alpha_blending.h"
 #include"debug.h"
+#include"Sound.h"
 
 constexpr int FPS{ 60 };
 constexpr int IM{ 9 };
@@ -834,10 +835,65 @@ GLvoid SpecialInput_up(int key, int x, int y) {
 	}
 	glutPostRedisplay();
 }
+
+void play_() {
+	CSound::Init();
+
+	// Allocate Object
+	CSound* sound = new CSound("sound.mp3", false);
+
+	while (true) {
+		// Play Sound | 사운드 재생 시작
+		if (true) {
+			sound->play();
+		}
+
+		// Pause Sound | 사운드 재생 일시중지
+		if (false) {
+			sound->pause();
+		}
+
+		// Resume Sound | 사운드 다시재생
+		if (false) {
+			sound->resume();
+		}
+
+		// Stop Sound | 사운드 재생 종료
+		if (false) {
+			sound->stop();
+		}
+
+
+		// Volume Up
+		if (false) {
+			sound->volumeUp();
+		}
+
+		// Volume Down
+		if (false) {
+			sound->volumeDown();
+		}
+
+
+		// Require Update
+		sound->Update();
+	}
+
+	// Free Object
+	delete sound;
+
+	// Release Fmod Llibrary
+	CSound::Release();
+}
+
 GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
+	case 'm': {
+		play_();
+		break;
+	}
 	case '`': {
 		bl_rain = bl_rain ? false : true;
 		break;

@@ -6,8 +6,8 @@
 #include<math.h>
 #include<string>
 #include<time.h>
-#include<gl/glew.h>
 #include<algorithm>
+#include<gl/glew.h>
 #include<gl/freeglut.h>
 #include<gl/freeglut_ext.h>
 #include<gl/glm/glm.hpp>

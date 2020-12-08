@@ -2,8 +2,7 @@
 #include"shader_sunkue.h"
 #include"texture_sunkue.h"
 
-
-
+#define OBJ_DIR "res/obj/"
 
 GLvoid ChangeCol(Obj& o, COLOR_ c) {
 	switch (c)
@@ -88,7 +87,7 @@ void cout_coll_box(Obj& obj) {
 
 bool LoadObj(const GLchar objFile[], Obj& obj, const GLchar f_style[]) 
 {
-	std::string OBJ{ "obj/" };
+	std::string OBJ{ OBJ_DIR };
 	std::ifstream in(OBJ + objFile, std::ios::in);
 	if (!in.is_open()) {
 		std::cerr << "ERROR: Objfile read ½ÇÆÐ\n" << objFile << '\n';

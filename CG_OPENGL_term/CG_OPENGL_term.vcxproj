@@ -22,26 +22,26 @@
     <ClInclude Include="Alpha_blending.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="debug.h" />
-    <ClInclude Include="Handle_evnts.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="Obj.h" />
     <ClInclude Include="PLANE.h" />
     <ClInclude Include="screen.h" />
     <ClInclude Include="shader_sunkue.h" />
+    <ClInclude Include="Sound.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="texture_sunkue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Alpha_blending.cpp" />
     <ClCompile Include="camera.cpp" />
-    <ClCompile Include="Handle_evnts.cpp" />
     <ClCompile Include="light.cpp" />
     <ClCompile Include="Obj.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PLANE.cpp" />
     <ClCompile Include="screen.cpp" />
     <ClCompile Include="shader_sunkue.cpp" />
+    <ClCompile Include="Sound.cpp" />
     <ClCompile Include="texture_sunkue.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -104,6 +104,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\core\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\core\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -148,6 +150,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>glew32.lib freeglut.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

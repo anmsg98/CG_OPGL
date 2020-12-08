@@ -4,6 +4,8 @@
 #include"stb_image.h"
 #endif // !STB_IMAGE_IMPLEMENTATION
 
+constexpr char image_dir[]{ "res/image/" };
+
 void set_flip_texture(bool set) {
 	stbi_set_flip_vertically_on_load(set);
 }
@@ -13,7 +15,7 @@ bool LoadTexture(Obj& obj, const char file[], GLsizei width, GLsizei height, int
 	//width,height = 2^n
 	//obj.Set_Color(glm::vec4(1.0f)); // --회색조
 	char F[256];
-	strncpy_s(F, "res/", sizeof(F));
+	strncpy_s(F, image_dir, sizeof(F));
 	strncat_s(F, file, sizeof(F));
 	GLuint texture;
 	glGenTextures(1, &texture); //--- 텍스처 생성
