@@ -15,7 +15,7 @@ struct PLANE {
 
 	Obj obj;
 	glm::vec3 pos{ 0.0,1000.0,0.0 };
-	glm::vec3 coll_size{ 20.0f,3.0f,20.0f };
+	glm::vec3 coll_size{ 40.0f,3.0f,40.0f };
 
 	COLOR_ color_type{ COLOR_::RED };
 

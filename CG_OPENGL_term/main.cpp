@@ -249,6 +249,7 @@ GLvoid DefaultObj() {
 }
 GLvoid MakeShape() {
 	plane.init();
+	score.init();
 	{
 		Obj tempbuilding;
 		LoadObj("apartment.obj", tempbuilding, "8/8/8");
@@ -286,6 +287,7 @@ GLvoid MakeShape() {
 		//tempmonster.obj.objData.vertices.clear();
 
 		monster[0].resize(monsternum);
+		monster[0].reserve(6);
 		COLOR_ tC{ COLOR_::RED };
 		int temp{ 0 };
 		for (int i = 0; i < monsternum; i++) {
@@ -303,12 +305,11 @@ GLvoid MakeShape() {
 		}
 
 		for (int i = 0; i < score.num - 3; i++) {
-			monster[0].reserve(1);
 			monster[0].push_back(tempmonster);
-			monster[0][i].obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-			monster[0][i].obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
-			monster[0][i].color_type = plane.color_type;
-			ChangeCol(monster[0][i].obj, monster[0][i].color_type);
+			monster[0].back().obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+			monster[0].back().obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			monster[0].back().color_type = plane.color_type;
+			ChangeCol(monster[0].back().obj, monster[0].back().color_type);
 		}
 		//std::cout << "==monster==\n";
 		//cout_coll_box(monster[0][0].obj);
@@ -318,9 +319,6 @@ GLvoid MakeShape() {
 		LoadTexture(ground[0], "sea.jpg", 512, 512, 3);
 		ground[0].M.push_back(glm::translate(df, { 0.0, ground_floor,0.0 }));
 		ground[0].M.push_back(glm::scale(df, { groundsize,10.0,groundsize }));
-	}
-	{
-		score.init();
 	}
 	MakeIM();
 };
@@ -361,7 +359,7 @@ GLvoid MakeIM() {
 	}
 	for (int im = 1; im < IM; im++) {
 		monster[im] = monster[0];
-		for (int j = 0; j < monsternum; j++) {
+		for (int j = 0; j < monster[0].size(); j++) {
 			monster[im][j].obj.M.at(0) *= tr[im];
 		}
 	}
@@ -594,7 +592,7 @@ GLvoid Timer(int value) {
 				}
 			}
 			{
-				constexpr glm::vec4 a{ -12.8,-15.7,-5.0 ,1.0f }, b{ 12.8,20.0,13.3,1.0f };
+				constexpr glm::vec4 a{ -13.0,-15.7,-5.2 ,1.0f }, b{ 13.0,20.0,13.5,1.0f };
 				std::vector<std::vector<monster_>::iterator> trashcan[IM];
 				bool add{ false };
 				for (std::vector<monster_>::iterator i{ monster[0].begin() }, e{ monster[0].end() }; i != e; i++) {

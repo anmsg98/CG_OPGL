@@ -160,23 +160,27 @@ bool PLANE::check_coll(glm::vec3 a, glm::vec3 b) {
 	if (b.z < a.z)std::swap(a.z, b.z);
 	glm::vec3 p = this->pos, coll = this->coll_size;
 	glm::mat4 M = this->obj.world_M();
-	glm::vec3 pos[9]{
-		p + glm::vec3{M* glm::vec4{  coll.x, coll.y, coll.z, 1.0 }},
-		p + glm::vec3{M* glm::vec4{ -coll.x, coll.y, coll.z, 1.0 }},
-		p + glm::vec3{M* glm::vec4{  coll.x,-coll.y, coll.z, 1.0 }},
-		p + glm::vec3{M* glm::vec4{ -coll.x,-coll.y, coll.z, 1.0 }},
-		p + glm::vec3{M* glm::vec4{  coll.x, coll.y,-coll.z, 1.0 }},
-		p + glm::vec3{M* glm::vec4{ -coll.x, coll.y,-coll.z, 1.0 }},
-		p + glm::vec3{M* glm::vec4{  coll.x,-coll.y,-coll.z, 1.0 }},
-		p + glm::vec3{M* glm::vec4{ -coll.x,-coll.y,-coll.z, 1.0 }},
-		p
+	glm::vec3 nn{ (speed / 20.0f * -nDir()) };
+	glm::vec3 pos[9]{ 
+		p,
+		p + glm::vec3{M * glm::vec4{  coll.x, coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M * glm::vec4{ -coll.x, coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M * glm::vec4{  coll.x,-coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M * glm::vec4{ -coll.x,-coll.y, coll.z, 1.0 }},
+		p + glm::vec3{M * glm::vec4{  coll.x, coll.y,-coll.z, 1.0 }},
+		p + glm::vec3{M * glm::vec4{ -coll.x, coll.y,-coll.z, 1.0 }},
+		p + glm::vec3{M * glm::vec4{  coll.x,-coll.y,-coll.z, 1.0 }},
+		p + glm::vec3{M * glm::vec4{ -coll.x,-coll.y,-coll.z, 1.0 }}
 	};
 
-	for (int i = 0; i < 9; i++) {
-		if ((pos[i].x < b.x && a.x < pos[i].x) && \
-			(pos[i].y < b.y && a.y < pos[i].y) && \
-			(pos[i].z < b.z && a.z < pos[i].z)) {
-			return true;
+	for (int j = 0; j < 20; j++) {
+		for (int i = 0; i < 9; i++) {
+			if ((pos[i].x < b.x && a.x < pos[i].x) && \
+				(pos[i].y < b.y && a.y < pos[i].y) && \
+				(pos[i].z < b.z && a.z < pos[i].z)) {
+				return true;
+			}
+			pos[i] += nn;
 		}
 	}
 	return false;
