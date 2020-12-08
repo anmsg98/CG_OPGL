@@ -139,6 +139,9 @@ LIGHT sun, moon;
 std::vector<bullet_> bullet;
 score_ score;
 
+CSound* sound1, * sound2;
+
+
 /*-----MAIN--*/
 int main(int argc, char** argv) {
 	srand((unsigned int)time(NULL));
@@ -202,9 +205,13 @@ int main(int argc, char** argv) {
 	DefaultObj();
 	MakeShape();
 	print_message();
-
+	CSound::Init();
+	sound1 = new CSound("res/sound/wave.mp3", true);
+	sound2 = new CSound("res/sound/singing.wav", false);
 	/* Loop */
 	glutMainLoop();
+	std::cout << "mainLoop error";
+	CSound::Release();
 }
 GLvoid print_message() {
 	std::cout <<
@@ -218,8 +225,7 @@ GLvoid print_message() {
 		plane_col[ L_Ctrl ]\n\
 		rebuilding[tab]\n\
 		camera[i j k l  mouse_wheel]\n\
-		=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\
-		";
+		=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";
 }
 GLvoid DefaultObj() {
 	/*temp sphere*/
@@ -688,8 +694,7 @@ GLvoid Timer(int value) {
 				else moon.off();
 			}
 		}
-		////////
-
+		/* score */
 		{
 			static GLfloat d = 0.0;
 			d += 0.2f;
@@ -698,6 +703,11 @@ GLvoid Timer(int value) {
 			D = glm::normalize(D);
 			score.set_pos(plane.pos + plane.nDir() * 18.0f + plane.grav * 5.0f + D * 2.0f * sin(d));
 			score.update();
+		}
+		/* sound */ 
+		{
+			sound1->Update();
+			sound2->Update();
 		}
 		glutTimerFunc(1200 / FPS, Timer, value);
 		break;
@@ -836,62 +846,29 @@ GLvoid SpecialInput_up(int key, int x, int y) {
 	glutPostRedisplay();
 }
 
-void play_() {
-	CSound::Init();
-
-	// Allocate Object
-	CSound* sound = new CSound("sound.mp3", false);
-
-	while (true) {
-		// Play Sound | 사운드 재생 시작
-		if (true) {
-			sound->play();
-		}
-
-		// Pause Sound | 사운드 재생 일시중지
-		if (false) {
-			sound->pause();
-		}
-
-		// Resume Sound | 사운드 다시재생
-		if (false) {
-			sound->resume();
-		}
-
-		// Stop Sound | 사운드 재생 종료
-		if (false) {
-			sound->stop();
-		}
-
-
-		// Volume Up
-		if (false) {
-			sound->volumeUp();
-		}
-
-		// Volume Down
-		if (false) {
-			sound->volumeDown();
-		}
-
-
-		// Require Update
-		sound->Update();
-	}
-
-	// Free Object
-	delete sound;
-
-	// Release Fmod Llibrary
-	CSound::Release();
-}
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
+	case 'v': {
+		sound1->play();
+		std::cout << "sound1-play\n";
+		break;
+	}
+	case 'b': {
+		sound1->pause();
+		std::cout << "sound1-pause\n";
+		break;
+	}
+	case 'n': {
+		sound1->resume();
+		std::cout << "sound1-resume\n";
+		break;
+	}
 	case 'm': {
-		play_();
+		sound2->play();
+		std::cout << "sound2-play\n";
 		break;
 	}
 	case '`': {

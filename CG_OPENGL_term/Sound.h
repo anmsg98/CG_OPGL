@@ -1,8 +1,8 @@
 #pragma once
 #ifndef _CSOUND_H_
-#pragma comment(lib, "fmod_vc.lib")
 #define _CSOUND_H_
 
+#pragma comment(lib, "fmod_vc.lib")
 #include <fmod.h>
 
 constexpr float SOUND_MAX{ 1.0f };
@@ -23,17 +23,17 @@ public:
     CSound(const char* path, bool loop);
     ~CSound();
 
-    static int Init();
-    static int Release();
+    static void Init();
+    static void Release();
 
-    int play();
-    int pause();
-    int resume();
-    int stop();
-    int volumeUp();
-    int volumeDown();
+    void play();
+    void pause();
+    void resume();
+    void stop();
+    void volumeUp();
+    void volumeDown();
 
-    int Update();
+    void Update();
 };
 
 #endif
