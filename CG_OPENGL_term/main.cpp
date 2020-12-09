@@ -139,7 +139,7 @@ LIGHT sun, moon;
 std::vector<bullet_> bullet;
 score_ score;
 
-CSound* sound1, * sound2;
+CSound* sound1, * sound2, * sound3;
 
 
 /*-----MAIN--*/
@@ -208,6 +208,7 @@ int main(int argc, char** argv) {
 	CSound::Init();
 	sound1 = new CSound("res/sound/wave.mp3", true);
 	sound2 = new CSound("res/sound/singing.wav", false);
+	sound3 = new CSound("res/sound/shooting.wav", false);
 	/* Loop */
 	glutMainLoop();
 	std::cout << "mainLoop error";
@@ -471,7 +472,7 @@ GLvoid drawScene() {
 
 /*이벤트 함수*/
 
-int shot_delay = 0;
+int shot_delay = 0, sound_delay = 0;
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
 bool up, down, left, right, L_drag, R_drag;
 GLvoid Timer(int value) {
@@ -484,6 +485,11 @@ GLvoid Timer(int value) {
 			shot_delay = (shot_delay + 1) % 5;
 			if (shot_delay == 0) {
 				if (bl_shot) {
+					sound_delay = (sound_delay + 1) % 2;
+					if (sound_delay == 0) {
+						sound3->play();
+						std::cout << "sound3-play\n";
+					}
 					bullet.push_back(bullet_());;
 					bullet_* a = &(bullet.back());
 					LoadObj("sphere.obj", a->obj, "8/8/8");
@@ -708,6 +714,7 @@ GLvoid Timer(int value) {
 		{
 			sound1->Update();
 			sound2->Update();
+			sound3->Update();
 		}
 		glutTimerFunc(1200 / FPS, Timer, value);
 		break;
