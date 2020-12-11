@@ -14,7 +14,7 @@ void PLANE::init() {
 	this->obj.M.resize(3, df);
 	this->obj.M.at(2) = glm::scale(df, glm::vec3(0.25f));
 	this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
-	this->setPos();
+	this->updatePos();
 	LoadTexture(this->obj, "red.jpg", 512, 512, 3);
 	this->head_light.col = { 1.0,1.0,1.0 };
 	this->head_light.use_spot = true;
@@ -90,6 +90,10 @@ void PLANE::go() {
 	check_area();
 }
 
+void PLANE::setPos(glm::vec3 pos) {
+	this->pos = pos;
+}
+
 void PLANE::check_area() {
 	/*¹Ù´Ú Ã¼Å©*/
 	if (this->pos.y < ground_floor + 15.0f) {
@@ -104,7 +108,7 @@ void PLANE::set_speed(GLfloat d) {
 	if (maxspeed < speed)speed = maxspeed;
 }
 
-void PLANE::setPos() {
+void PLANE::updatePos() {
 	this->obj.M.at(0) = glm::translate(df, pos);
 }
 
@@ -195,7 +199,7 @@ void PLANE::update() {
 	this->update_head_light();
 	this->check_horizon();
 
-	this->setPos();
+	this->updatePos();
 	this->reRoll();
 }
 

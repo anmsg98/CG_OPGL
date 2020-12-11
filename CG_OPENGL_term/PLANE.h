@@ -59,7 +59,8 @@ struct PLANE {
 
 	void set_speed(GLfloat d);
 
-	void setPos();
+	void setPos(glm::vec3 pos);
+	void updatePos();
 
 	void view();
 

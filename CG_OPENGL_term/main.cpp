@@ -491,7 +491,7 @@ GLvoid Timer(int value) {
 					sound_delay = (sound_delay + 1) % 2;
 					if (sound_delay == 0) {
 						sound_shooting->play();
-						std::cout << "sound_shooting-play\n";
+						//std::cout << "sound_shooting-play\n";
 					}
 					bullet.push_back(bullet_());;
 					bullet_* a = &(bullet.back());
@@ -600,12 +600,10 @@ GLvoid Timer(int value) {
 				for (int i = 0; i < buildingnum; i++) {
 					glm::mat4 M{ building[0][i].world_M() };
 					if (plane.check_coll(M * a, M * b)) {
-						//////////////////////
 						sound_explosion->play();
-						std::cout << "sound_explosion-play\n";
-						plane.color_type++;
-						ChangeCol(plane.obj, plane.color_type);
-						//std::cout << "!\n";
+						//std::cout << "sound_explosion-play\n";
+						plane.setPos({ 0.0, 0.0, 0.0 });
+						break;
 					}
 				}
 			}
@@ -619,7 +617,7 @@ GLvoid Timer(int value) {
 
 						if (plane.color_type == i->color_type) {
 							sound_item->play();
-							std::cout << "sound_item-play\n";
+							//std::cout << "sound_item-play\n";
 							if (score.add_num(-1)) {
 								//change color
 								constexpr int d = static_cast<int>(COLOR_::count) - 1;
@@ -632,7 +630,7 @@ GLvoid Timer(int value) {
 						}
 						else {
 							sound_item_fail->play();
-							std::cout << "sound_item_fail-play\n";
+							//std::cout << "sound_item_fail-play\n";
 							score.add_num(1);
 						}
 
@@ -864,8 +862,6 @@ GLvoid SpecialInput_up(int key, int x, int y) {
 	}
 	glutPostRedisplay();
 }
-
-
 GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
