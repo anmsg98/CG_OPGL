@@ -476,7 +476,6 @@ bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealt
 bool up, down, left, right, L_drag, R_drag;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
-	static int slow{ 1 };
 	switch (value)
 	{
 	case  main_timer: {
@@ -593,10 +592,8 @@ GLvoid Timer(int value) {
 					glm::mat4 M{ building[0][i].world_M() };
 					if (plane.check_coll(M * a, M * b)) {
 						//////////////////////
-						slow++;
-						if (5 < slow) {
-							plane.set_default();
-						}
+						plane.color_type++;
+						ChangeCol(plane.obj, plane.color_type);
 						//std::cout << "!\n";
 					}
 				}
@@ -712,7 +709,7 @@ GLvoid Timer(int value) {
 			sound1->Update();
 			sound2->Update();
 		}
-		glutTimerFunc(1200 / FPS * slow, Timer, value);
+		glutTimerFunc(1200 / FPS, Timer, value);
 		break;
 	}
 	default: { break; }

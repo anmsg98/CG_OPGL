@@ -20,25 +20,13 @@ void PLANE::init() {
 	this->head_light.use_spot = true;
 }
 
-void PLANE::set_default() {
-	this->pos = { 0.0, 1000.0, 0.0 };
-	this->speed = 10.0f;
-	this->head_light.off();
-	this->obj.M.clear();
-	this->obj.M.resize(3, df);
-	this->obj.M.at(2) = glm::scale(df, glm::vec3(0.25f));
-	this->obj.M.at(1) = glm::rotate(df, glm::radians(180.0f), { 0.0,1.0,0.0 });
-	this->setPos();
-	this->head = { 0.0,0.0,-1.0 };
-	this->tail = { 0.0,0.0,1.0 };
-	this->up = { 0.0,1.0,0.0 };
-	this->viewMat = df;
-	this->view_dist = 100.0f;
-	this->speed = 10.0f;
-}
 
+void PLANE::default_color() {
+	this->obj.Set_Color({ 0.5,0.8,0.2,1.0 });
+}
 void PLANE::Stealth(bool on) {
-	
+	if (on)obj.Set_Color({ 0.5,0.0,1.0,0.5 });
+	else this->default_color();
 }
 
 void PLANE::update_coor(glm::mat4& m) {
