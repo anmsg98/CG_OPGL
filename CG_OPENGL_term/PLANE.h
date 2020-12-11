@@ -22,7 +22,7 @@ struct PLANE {
 	glm::vec3 head{ 0.0,0.0,-1.0 };
 	glm::vec3 tail{ 0.0,0.0,1.0 };
 	glm::vec3 up{ 0.0,1.0,0.0 };
-	GLfloat turn_degree{ 0.0f };
+
 
 	glm::mat4 viewMat{ df };
 	GLfloat view_dist{ 100.0f };
@@ -35,8 +35,8 @@ struct PLANE {
 	
 	void init();
 
+	void set_default();
 
-	void default_color();
 	void Stealth(bool on);
 	void update_coor(glm::mat4& m);
 
