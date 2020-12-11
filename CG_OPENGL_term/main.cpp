@@ -139,7 +139,7 @@ LIGHT sun, moon;
 std::vector<bullet_> bullet;
 score_ score;
 
-CSound* sound1, * sound2;
+CSound* sound1, * sound2, * sound_shooting, *sound_item, * sound_item_fail, * sound_explosion;
 
 
 /*-----MAIN--*/
@@ -208,6 +208,10 @@ int main(int argc, char** argv) {
 	CSound::Init();
 	sound1 = new CSound("res/sound/wave.mp3", true);
 	sound2 = new CSound("res/sound/singing.wav", false);
+	sound_shooting = new CSound("res/sound/shooting.wav", false);
+	sound_item = new CSound("res/sound/item.mp3", false);
+	sound_item_fail = new CSound("res/sound/item_fail.mp3", false);
+	sound_explosion = new CSound("res/sound/explosion.wav", false);
 	/* Loop */
 	glutMainLoop();
 	std::cout << "mainLoop error";
@@ -471,7 +475,7 @@ GLvoid drawScene() {
 
 /*이벤트 함수*/
 
-int shot_delay = 0;
+int shot_delay = 0, sound_delay = 0;
 bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
 bool up, down, left, right, L_drag, R_drag;
 GLvoid Timer(int value) {
@@ -484,6 +488,11 @@ GLvoid Timer(int value) {
 			shot_delay = (shot_delay + 1) % 5;
 			if (shot_delay == 0) {
 				if (bl_shot) {
+					sound_delay = (sound_delay + 1) % 2;
+					if (sound_delay == 0) {
+						sound_shooting->play();
+						std::cout << "sound_shooting-play\n";
+					}
 					bullet.push_back(bullet_());;
 					bullet_* a = &(bullet.back());
 					LoadObj("sphere.obj", a->obj, "8/8/8");
@@ -592,6 +601,8 @@ GLvoid Timer(int value) {
 					glm::mat4 M{ building[0][i].world_M() };
 					if (plane.check_coll(M * a, M * b)) {
 						//////////////////////
+						sound_explosion->play();
+						std::cout << "sound_explosion-play\n";
 						plane.color_type++;
 						ChangeCol(plane.obj, plane.color_type);
 						//std::cout << "!\n";
@@ -607,6 +618,8 @@ GLvoid Timer(int value) {
 					if (plane.check_coll(M * a, M * b)) {
 
 						if (plane.color_type == i->color_type) {
+							sound_item->play();
+							std::cout << "sound_item-play\n";
 							if (score.add_num(-1)) {
 								//change color
 								constexpr int d = static_cast<int>(COLOR_::count) - 1;
@@ -618,6 +631,8 @@ GLvoid Timer(int value) {
 							}
 						}
 						else {
+							sound_item_fail->play();
+							std::cout << "sound_item_fail-play\n";
 							score.add_num(1);
 						}
 
@@ -708,6 +723,10 @@ GLvoid Timer(int value) {
 		{
 			sound1->Update();
 			sound2->Update();
+			sound_shooting->Update();
+			sound_item->Update();
+			sound_item_fail->Update();
+			sound_explosion->Update();
 		}
 		glutTimerFunc(1200 / FPS, Timer, value);
 		break;
