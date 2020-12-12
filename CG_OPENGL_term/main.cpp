@@ -28,11 +28,12 @@ GLvoid Mouse(int button, int state, int x, int y);
 GLvoid Motion(int x, int y);
 GLvoid MouseWheel(int button, int dir, int x, int y);
 GLvoid Timer(int value);
-GLvoid MakeIM();
 /**/
-GLvoid MakeShape();
-GLvoid DefaultObj();
 GLvoid print_message();
+GLvoid DefaultObj();
+GLvoid MakeShape();
+GLvoid MakeIM();
+GLvoid SetSound();
 
 /**/
 struct bullet_ {
@@ -73,16 +74,16 @@ struct score_ {
 		num += a;
 		if (num <= 0) {
 			set_num();
-			return true;
+			return false;
 		}
 		else if (6 < num) {
 			num = 6;
 			update_tex();
-			return true;
+			return false;
 		}
 		else {
 			update_tex();
-			return false;
+			return true;
 		}
 	}
 
@@ -139,8 +140,7 @@ LIGHT sun, moon;
 std::vector<bullet_> bullet;
 score_ score;
 
-CSound* sound1, * sound2, * sound_shooting, *sound_item, * sound_item_fail, * sound_explosion;
-
+CSound* day, * night, * wind, * sound_shooting, * sound_item, * sound_item_fail, * sound_explosion;
 
 /*-----MAIN--*/
 int main(int argc, char** argv) {
@@ -205,13 +205,7 @@ int main(int argc, char** argv) {
 	DefaultObj();
 	MakeShape();
 	print_message();
-	CSound::Init();
-	sound1 = new CSound("res/sound/wave.mp3", true);
-	sound2 = new CSound("res/sound/singing.wav", false);
-	sound_shooting = new CSound("res/sound/shooting.wav", false);
-	sound_item = new CSound("res/sound/item.mp3", false);
-	sound_item_fail = new CSound("res/sound/item_fail.mp3", false);
-	sound_explosion = new CSound("res/sound/explosion.wav", false);
+	SetSound();
 	/* Loop */
 	glutMainLoop();
 	std::cout << "mainLoop error";
@@ -221,14 +215,14 @@ GLvoid print_message() {
 	std::cout <<
 		"\
 		-= -= -= -= -= -= -= -= -= -= -= -= -= -= -\n\
-		time_stop[ z ]\n\
+		time_stop_SM [ z ]\n\
 		fire[ space ]\n\
 		head_light [ 1 ]\n\
-		head_light [ Rclick + mouse_wheel ]\n\
+		head_light_degree [ Rclick + mouse_wheel ]\n\
 		plane[w a s d up(8) down(5) left(4) right(6)]\n\
-		plane_col[ L_Ctrl ]\n\
+		Change_plane_color[ L_Ctrl ]\n\
 		rebuilding[tab]\n\
-		camera[i j k l  mouse_wheel]\n\
+		camera[i j k l  mouse_wheel 2 c ]\n\
 		=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";
 }
 GLvoid DefaultObj() {
@@ -379,6 +373,20 @@ GLvoid MakeIM() {
 		ground[im].M.at(0) *= tr[im];
 	}
 }
+GLvoid SetSound() {
+	CSound::Init();
+	day = new CSound("res/sound/day.mp3", true);
+	night = new CSound("res/sound/night.mp3", true);
+	wind = new CSound("res/sound/wind01.mp3", true);
+	sound_shooting = new CSound("res/sound/shooting.wav", false);
+	sound_item = new CSound("res/sound/item.mp3", false);
+	sound_item_fail = new CSound("res/sound/item_fail.mp3", false);
+	sound_explosion = new CSound("res/sound/explosion.wav", false);
+
+	day->play();
+	night->play();
+	wind->play();
+}
 
 
 bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
@@ -476,10 +484,11 @@ GLvoid drawScene() {
 /*이벤트 함수*/
 
 int shot_delay = 0, sound_delay = 0;
-bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, bl_rain, stealth, bl_shot;
-bool up, down, left, right, L_drag, R_drag;
+bool P_go, P_stop, P_YL, P_YR, P_RL, P_RR, P_PU, P_PD, timeStop, stealth, bl_shot;
+bool up, down, left, right, L_drag, R_drag, view_SM;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
+	static GLfloat day__{ 0.0f }, night__{ 0.0f };
 	switch (value)
 	{
 	case  main_timer: {
@@ -521,29 +530,6 @@ GLvoid Timer(int value) {
 			for (std::vector<std::vector<bullet_>::iterator>::iterator i = trashcan.begin(), e = trashcan.end(); i != e; i++) {
 				(*i)->obj.DelObj();
 				bullet.erase(*i);
-			}
-		}
-		/* camera */
-		{
-			if (up) {
-				glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 12)), camera.Right());
-				plane.viewMat = R * plane.viewMat;
-				camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
-			}
-			if (down) {
-				glm::mat4 R = glm::rotate(df, glm::radians(degree / (FPS / 12)), camera.Right());
-				plane.viewMat = R * plane.viewMat;
-				camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
-			}
-			if (right) {
-				glm::mat4 R = glm::rotate(df, glm::radians(degree / (FPS / 12)), camera.Up());
-				plane.viewMat = R * plane.viewMat;
-				camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
-			}
-			if (left) {
-				glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 12)), camera.Up());
-				plane.viewMat = R * plane.viewMat;
-				camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
 			}
 		}
 		/* plane */
@@ -595,117 +581,147 @@ GLvoid Timer(int value) {
 		/* check_coll */
 		{
 			//timer::start_mes(); //5-7 // coll-> [10 < ] ms
-			{
-				constexpr glm::vec4 a{ -32.4,18.2,-12.5 ,1.0f }, b{ 32.4,115.33,18.63 ,1.0f };
-				for (int i = 0; i < buildingnum; i++) {
-					glm::mat4 M{ building[0][i].world_M() };
-					if (plane.check_coll(M * a, M * b)) {
-						sound_explosion->play();
-						//std::cout << "sound_explosion-play\n";
-						plane.setPos({ 0.0, 0.0, 0.0 });
-						break;
+			if (!stealth) {
+				{
+					constexpr glm::vec4 a{ -32.4,18.2,-12.5 ,1.0f }, b{ 32.4,115.33,18.63 ,1.0f };
+					for (int i = 0; i < buildingnum; i++) {
+						glm::mat4 M{ building[0][i].world_M() };
+						if (plane.check_coll(M * a, M * b)) {
+							sound_explosion->play();
+							//std::cout << "sound_explosion-play\n";
+							plane.setPos({ 0.0, 0.0, 0.0 });
+							plane.set_speed(-plane.speed + 2.0f);
+							stealth = true;
+							break;
+						}
 					}
 				}
-			}
-			{
-				constexpr glm::vec4 a{ -13.0,-15.7,-5.2 ,1.0f }, b{ 13.0,20.0,13.5,1.0f };
-				std::vector<std::vector<monster_>::iterator> trashcan[IM];
-				bool add{ false };
-				for (std::vector<monster_>::iterator i{ monster[0].begin() }, e{ monster[0].end() }; i != e; i++) {
-					glm::mat4 M{ i->obj.world_M() };
-					if (plane.check_coll(M * a, M * b)) {
+				{
+					constexpr glm::vec4 a{ -13.0,-15.7,-5.2 ,1.0f }, b{ 13.0,20.0,13.5,1.0f };
+					std::vector<std::vector<monster_>::iterator> trashcan[IM];
+					bool add{ false }, add1{ false };
+					for (std::vector<monster_>::iterator i{ monster[0].begin() }, e{ monster[0].end() }; i != e; i++) {
+						glm::mat4 M{ i->obj.world_M() };
+						if (plane.check_coll(M * a, M * b)) {
+						
+							if (plane.color_type == i->color_type) {
+								sound_item->play();
+								//std::cout << "sound_item-play\n";
+								if (!score.add_num(-1)) {
+									//change color
+									constexpr int d = static_cast<int>(COLOR_::count) - 1;
+									int x = rand() % d + 1;
+									for (int i = 0; i < x; i++)	plane.color_type++;
+									ChangeCol(plane.obj, plane.color_type);
 
-						if (plane.color_type == i->color_type) {
-							sound_item->play();
-							//std::cout << "sound_item-play\n";
-							if (score.add_num(-1)) {
-								//change color
-								constexpr int d = static_cast<int>(COLOR_::count) - 1;
-								int x = rand() % d + 1;
-								for (int i = 0; i < x; i++)	plane.color_type++;
-								ChangeCol(plane.obj, plane.color_type);
+									add = true;
+								}
+							}
+							else {
+								stealth = true;
+								sound_item_fail->play();
+								//std::cout << "sound_item_fail-play\n";
+								if (score.add_num(1))add1 = true;
+							}
 
-								add = true;
+							for (int im = 0; im < IM; im++) {
+								trashcan[im].push_back(monster[im].begin() + (i - monster[0].begin()));
+							}
+
+
+							break;
+						}
+					}
+					// trashcan
+					for (int im = 0; im < IM; im++) {
+						for (std::vector<std::vector<monster_>::iterator>::iterator i = trashcan[im].begin(), e = trashcan[im].end(); i != e; i++) {
+							monster[im].erase(*i);
+
+						}
+					}
+					//add monster
+					{
+						constexpr GLfloat size{ groundsize * 2.0f };
+						static glm::mat4 tr[IM]{
+							glm::mat4(1.0f),
+							glm::translate(df,{-size,0.0,size}),
+							glm::translate(df,{0.0,0.0,size}),
+							glm::translate(df,{size,0.0,size}),
+
+							glm::translate(df,{-size,0.0,0.0}),
+							glm::translate(df,{size,0.0,0.0}),
+
+							glm::translate(df,{-size,0.0,-size}),
+							glm::translate(df,{0.0,0.0,-size}),
+							glm::translate(df,{size,0.0,-size}),
+						};
+
+						if (add) {
+							monster[0].reserve(score.num);
+							for (int i = 0; i < score.num; i++) {
+								monster[0].push_back(tempmonster);
+								monster[0].back().obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+								monster[0].back().obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+								monster[0].back().color_type = plane.color_type;
+								ChangeCol(monster[0].back().obj, monster[0].back().color_type);
+							}
+							for (int im = 1; im < IM; im++) {
+								monster[im] = monster[0];
+								for (int j = 0; j < monster[0].size(); j++) {
+									monster[im][j].obj.M.at(0) *= tr[im];
+								}
 							}
 						}
-						else {
-							sound_item_fail->play();
-							//std::cout << "sound_item_fail-play\n";
-							score.add_num(1);
+
+						if (add1) {
+							monster[0].reserve(1);
+							monster[0].push_back(tempmonster);
+							monster[0].back().obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
+							monster[0].back().obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+							monster[0].back().color_type = plane.color_type;
+							ChangeCol(monster[0].back().obj, monster[0].back().color_type);
+
+							constexpr GLfloat size{ groundsize * 2.0f };
+							for (int im = 1; im < IM; im++) {
+								monster[im].reserve(1);
+								monster[im].push_back(monster[0].back());
+								monster[im].back().obj.M.at(0) *= tr[im];
+							}
 						}
-
-						for (int im = 0; im < IM; im++) {
-							trashcan[im].push_back(monster[im].begin() + (i - monster[0].begin()));
-						}
-
-
-						break;
 					}
 				}
-				// trashcan
-				for (int im = 0; im < IM; im++) {
-					for (std::vector<std::vector<monster_>::iterator>::iterator i = trashcan[im].begin(), e = trashcan[im].end(); i != e; i++) {
-						monster[im].erase(*i);
-
-					}
-				}
-				//add monster
-				if (add) {
-					monster[0].reserve(score.num);
-					for (int i = 0; i < score.num; i++) {
-						monster[0].push_back(tempmonster);
-						monster[0].back().obj.M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-						monster[0].back().obj.M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 800) + 1800.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
-						monster[0].back().color_type = plane.color_type;
-						ChangeCol(monster[0].back().obj, monster[0].back().color_type);
-					}
-					constexpr GLfloat size{ groundsize * 2.0f };
-					static glm::mat4 tr[IM]{
-						glm::mat4(1.0f),
-						glm::translate(df,{-size,0.0,size}),
-						glm::translate(df,{0.0,0.0,size}),
-						glm::translate(df,{size,0.0,size}),
-						
-						glm::translate(df,{-size,0.0,0.0}),
-						glm::translate(df,{size,0.0,0.0}),
-
-						glm::translate(df,{-size,0.0,-size}),
-						glm::translate(df,{0.0,0.0,-size}),
-						glm::translate(df,{size,0.0,-size}),
-					};
-					for (int im = 1; im < IM; im++) {
-						monster[im] = monster[0];
-						for (int j = 0; j < monster[0].size(); j++) {
-							monster[im][j].obj.M.at(0) *= tr[im];
-						}
-						//monster[im].insert(monster[im].end(), monster[0].end() - score.num, monster[0].end());
-					}
-				}
+				//timer::end_mes();
 			}
-			//timer::end_mes();
 		}
 		/* day, whether */
 		{
+			//asf
 			if (timeStop == false) {
-				constexpr GLfloat light_degree{ -1.0f };
-				sun.pos = glm::rotate(df, glm::radians(light_degree / (FPS / 24.0f)), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
+				constexpr GLfloat light_degree{ -1.0f / (FPS / 24.0f) };
+				sun.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ sun.pos ,1.0 };
 				sun.update();
 				if (ground_floor < sun.pos.y) {
 					GLfloat d = sun.pos.y / groundsize;
 					LIGHT::ambient = d;
 					LIGHT::ambientColor = { 1.0,d,1.0 };
+					night__ = 0.0f;
+					day__ += abs(light_degree);
 					sun.on();
 				}
 				else sun.off();
-				moon.pos = glm::rotate(df, glm::radians(light_degree / (FPS / 24.0f)), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
+
+				moon.pos = glm::rotate(df, glm::radians(light_degree), { 0.0,0.0,1.0 }) * glm::vec4{ moon.pos ,1.0 };
 				moon.update();
 				if (ground_floor < moon.pos.y) {
 					LIGHT::ambient = 0.6f;
 					LIGHT::ambientColor = { 0.3,0.3,1.0 };
+					day__ = 0.0f;
+					night__ += abs(light_degree);
 					moon.on();
 				}
 				else moon.off();
 			}
+			//asdf
 		}
 		/* score */
 		{
@@ -717,10 +733,57 @@ GLvoid Timer(int value) {
 			score.set_pos(plane.pos + plane.nDir() * 18.0f + plane.grav * 5.0f + D * 2.0f * sin(d));
 			score.update();
 		}
+		/* camera */
+		{
+			if (view_SM) {
+				glm::vec3 dir;
+				if (day__ != 0.0f) {
+					camera.AT = sun.pos;
+					dir = glm::normalize(plane.pos - sun.pos);
+				}
+				if (night__ != 0.0f) {
+					camera.AT = moon.pos;
+					dir = glm::normalize(plane.pos - moon.pos);
+				}
+				constexpr glm::mat4 M{
+					0.951187,	-0.0153978,	0.308231,	0,
+					-0.0334187,	0.987743,	-0.152471,	0,
+					0.306801,	0.155329,	0.939014,	0,
+					0,	0,	0,	1
+				};
+				camera.EYE = glm::translate(df, plane.pos) * M * glm::translate(df, dir * plane.view_dist) * glm::vec4(1.0f);
+			}
+			else {
+				if (up) {
+					glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 12)), camera.Right());
+					plane.viewMat = R * plane.viewMat;
+					camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+				}
+				if (down) {
+					glm::mat4 R = glm::rotate(df, glm::radians(degree / (FPS / 12)), camera.Right());
+					plane.viewMat = R * plane.viewMat;
+					camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+				}
+				if (right) {
+					glm::mat4 R = glm::rotate(df, glm::radians(degree / (FPS / 12)), camera.Up());
+					plane.viewMat = R * plane.viewMat;
+					camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+				}
+				if (left) {
+					glm::mat4 R = glm::rotate(df, glm::radians(-degree / (FPS / 12)), camera.Up());
+					plane.viewMat = R * plane.viewMat;
+					camera.UP = glm::vec3(R * glm::vec4(camera.UP, 1.0f));
+				}
+			}
+		}
 		/* sound */ 
 		{
-			sound1->Update();
-			sound2->Update();
+			day->setVolume(glm::sin(glm::radians(day__)));
+			day->Update();
+			night->setVolume(glm::sin(glm::radians(night__)));
+			night->Update();
+			wind->setVolume(plane.speed / plane.maxspeed);
+			wind->Update();
 			sound_shooting->Update();
 			sound_item->Update();
 			sound_item_fail->Update();
@@ -866,28 +929,8 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
 	switch (key)
 	{
-	case 'v': {
-		sound1->play();
-		std::cout << "sound1-play\n";
-		break;
-	}
-	case 'b': {
-		sound1->pause();
-		std::cout << "sound1-pause\n";
-		break;
-	}
-	case 'n': {
-		sound1->resume();
-		std::cout << "sound1-resume\n";
-		break;
-	}
-	case 'm': {
-		sound2->play();
-		std::cout << "sound2-play\n";
-		break;
-	}
 	case '`': {
-		bl_rain = bl_rain ? false : true;
+		stealth = true;
 		break;
 	}
 	case 'i': {
@@ -926,16 +969,11 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	case '1': {
 		plane.HeadLightOnOff();
 		plane.head_light.spot_theta = 2.5f;
+		// plane.head_light.col = glm::vec3(1.0f);
 		break;
 	}
 	case '2': {
-		plane.head_light.spot_theta = 2.5f;
-		plane.head_light.col = glm::vec3(1.0f);
-		break;
-	}
-	case '3': {
-		plane.head_light.spot_theta = 3.0f;
-		plane.head_light.col = glm::vec3(1.0f);
+		view_SM = true;
 		break;
 	}
 	case 'C':
@@ -1031,6 +1069,10 @@ GLvoid keyboard_up(unsigned char key, int x, int y) {
 	case 'D':
 	case 'd': {
 		P_YR = false;
+		break;
+	}
+	case '2': {
+		view_SM = false;
 		break;
 	}
 	case '4': {

@@ -21,12 +21,9 @@ void PLANE::init() {
 }
 
 
-void PLANE::default_color() {
-	this->obj.Set_Color({ 0.5,0.8,0.2,1.0 });
-}
 void PLANE::Stealth(bool on) {
-	if (on)obj.Set_Color({ 0.5,0.0,1.0,0.5 });
-	else this->default_color();
+	if (on)LoadTexture(this->obj, "gray.png", 512, 512, 3);
+	else ChangeCol(this->obj, this->color_type);
 }
 
 void PLANE::update_coor(glm::mat4& m) {

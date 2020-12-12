@@ -30,6 +30,7 @@ public:
     void pause();
     void resume();
     void stop();
+    void setVolume(float vol);
     void volumeUp();
     void volumeDown();
 
