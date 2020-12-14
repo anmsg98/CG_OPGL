@@ -25,7 +25,6 @@ GLvoid SpecialInput_up(int key, int x, int y);
 GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid keyboard_up(unsigned char key, int x, int y);
 GLvoid Mouse(int button, int state, int x, int y);
-GLvoid Motion(int x, int y);
 GLvoid MouseWheel(int button, int dir, int x, int y);
 GLvoid Timer(int value);
 /**/
@@ -194,7 +193,6 @@ int main(int argc, char** argv) {
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(keyboard_up);
 	glutMouseFunc(Mouse);
-	glutMotionFunc(Motion);
 	glutMouseWheelFunc(MouseWheel);
 
 	/* set timer */
@@ -215,14 +213,14 @@ GLvoid print_message() {
 	std::cout <<
 		"\
 		-= -= -= -= -= -= -= -= -= -= -= -= -= -= -\n\
-		time_stop_SM [ z ]\n\
-		fire[ space ]\n\
 		head_light [ 1 ]\n\
 		head_light_degree [ Rclick + mouse_wheel ]\n\
 		plane[w a s d up(8) down(5) left(4) right(6)]\n\
-		Change_plane_color[ L_Ctrl ]\n\
-		rebuilding[tab]\n\
 		camera[i j k l  mouse_wheel 2 c ]\n\
+		-= -= -= -= -= -= dev = -= -= -= -= -= -= -\n\
+		Change_plane_color[ L_Ctrl ]\n\
+		time_stop_SM [ z ]\n\
+		fire[ space ]\n\
 		=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";
 }
 GLvoid DefaultObj() {
@@ -843,10 +841,6 @@ GLvoid Mouse(int button, int state, int x, int y) {
 	}
 	}
 }
-GLvoid Motion(int x, int y) {
-	GLfloat GLx = { ((float)x / screen.width) * 2 - 1 }, GLy{ (-((float)y / screen.height) * 2) + 1 };
-	glutPostRedisplay();
-}
 GLvoid MouseWheel(int button, int dir, int x, int y) {
 	constexpr GLfloat dd{ 0.04f };
 	if (dir > 0)
@@ -930,7 +924,9 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	switch (key)
 	{
 	case '`': {
-		stealth = true;
+		if (!stealth) {
+			stealth = true;
+		}
 		break;
 	}
 	case 'i': {
@@ -947,23 +943,6 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	}
 	case 'l': {
 		right = true;
-		break;
-	}
-	case '0': {
-		if (!stealth) {
-			stealth = true;
-		}
-		break;
-	}
-	case '\t': {
-		for (int i = 0; i < buildingnum; i++) {
-			building[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % int(groundsize)*2) - groundsize,-40.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
-		}
-		for (int m = 1; m < IM; m++) {
-			for (int i = 0; i < buildingnum; i++) {
-				building[m][i].M.at(0) = building[0][i].M.at(0);
-			}
-		}
 		break;
 	}
 	case '1': {
