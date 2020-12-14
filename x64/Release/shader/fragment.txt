@@ -1,0 +1,83 @@
+#version 330
+#define MAX_LIGHTS 8
+
+in vec3 v_normal;
+in vec2 v_texCoord;
+in vec4 v_color;
+in vec3 fragPos;
+
+out vec4 FragColor;
+
+uniform vec3 lightColor[MAX_LIGHTS];
+uniform vec3 lightPos[MAX_LIGHTS];
+uniform int use_spot[MAX_LIGHTS];
+uniform float spot_cos[MAX_LIGHTS];
+uniform float spot_out_cos[MAX_LIGHTS];
+uniform vec3 spot_dir[MAX_LIGHTS];
+
+
+uniform vec3 ambientColor;
+uniform vec3 viewPos;
+uniform float ambientLight;
+uniform int shine;
+uniform vec3 spec;
+uniform sampler2D texture1;
+uniform int use_tex;
+uniform int light_num;
+
+float attenuation(vec3 att_lightPos){
+	float constant = 1.0f;
+	float linear = 0.000007f;
+	float quadratic = 0.00000002f;
+	float dist =distance(fragPos,att_lightPos);
+	float under = constant + linear*dist + quadratic*dist*dist;
+	return 1.0/under;
+}
+
+float SpotLight(float s_cos,float f_cos){
+	if(s_cos < f_cos){
+		return 0.5f;
+	}
+	else return 0.0f;
+}
+
+
+
+void main(void)
+{	
+	vec3 result = vec3(0.0,0.0,0.0);
+	vec3 ambient = clamp(ambientLight*ambientColor,0.0,1.0);
+	
+	vec3 normalVector = normalize(v_normal);
+	
+
+	for(int i=0;i<light_num;i++){
+		vec3 lightDir = normalize(lightPos[i]-fragPos);
+
+		if(use_spot[i]==1){
+			vec3 spotDir = normalize(-spot_dir[i]);
+			float f_cosine = dot(lightDir, spotDir);		
+			float epsilon   = spot_cos[i] - spot_out_cos[i];
+			float intensity = clamp((f_cosine - spot_out_cos[i]) / epsilon, 0.0, 1.0);
+			vec3 spot = clamp(intensity * lightColor[i],0.0,1.0);
+			result = result + vec3(spot * v_color.rgb) * attenuation(lightPos[i]);
+		}
+		else{
+			float diffuseLight = max(dot(normalVector,lightDir),0.0); 
+			vec3 diffuse = clamp(diffuseLight * lightColor[i],0.0,1.0);
+
+			vec3 viewDir = normalize(viewPos-fragPos);
+			vec3 reflectDir = reflect(-lightDir,normalVector);
+
+			float specularLight = max(dot(viewDir,reflectDir),0.0);
+			specularLight = pow(specularLight,shine);
+			vec3 specular = clamp(specularLight*lightColor[i],0.0,1.0);
+
+			result = result + vec3(diffuse*v_color.rgb+specular*spec) * attenuation(lightPos[i]);
+		}
+	}
+	//result = result/light_num; //최대밝기 제한시 해제
+	result = result + ambient*v_color.rgb;
+	if(use_tex==1){result = vec3(texture(texture1, v_texCoord)) * result;}
+	FragColor = vec4(result,v_color.a);
+}

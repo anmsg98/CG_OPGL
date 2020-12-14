@@ -1,0 +1,6 @@
+﻿  Generating code
+  Previous IPDB not found, fall back to full compilation.
+C:\SUNKUE\_작업물 보관소\학업\2-2\컴퓨터그래픽스(01) 송인희\CG_OPENGL_TERM\CG_OPENGL_term\light.cpp(26): warning C4715: 'LIGHT::on': not all control paths return a value
+  All 1288 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  CG_OPENGL_term.vcxproj -> C:\SUNKUE\_작업물 보관소\학업\2-2\컴퓨터그래픽스(01) 송인희\CG_OPENGL_TERM\x64\Release\CG_OPENGL_term.exe
