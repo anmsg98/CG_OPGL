@@ -10,3 +10,6 @@ struct CAMERA {
 	glm::mat4 view_M();
 };
 extern CAMERA camera;
+int f() {
+	double 0.0;
+}

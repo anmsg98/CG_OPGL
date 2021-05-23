@@ -136,8 +136,10 @@ GLuint InitShader()
 	shaderID = make_shaderProgram(vertexShader, fragmentShader);
 	return shaderID;
 }
+#include<chrono>
 bool InitBuffer(Obj& obj)
 {
+	auto timer1{ std::chrono::high_resolution_clock::now() };
 	//if (obj.objData.VAO != 0)glDeleteVertexArrays(1, &(obj.objData.VAO));
 	GLuint abo;	// array buffer obj
 	GLuint ebo;	// elements bo
@@ -153,6 +155,7 @@ bool InitBuffer(Obj& obj)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj.objData.verIndices.size() * sizeof(Index), obj.objData.verIndices.data(), GL_STATIC_DRAW);
 
 	//--- position(vertex)
+
 	GLint positionAttribute = glGetAttribLocation(shaderID, "position");
 	if (positionAttribute == -1) {
 		std::cerr << "position 속성 설정 실패" << '\n';
@@ -188,8 +191,16 @@ bool InitBuffer(Obj& obj)
 	glEnableVertexAttribArray(texCoordAttribute);
 	glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, tex));
 
+	
 	glBindVertexArray(0);
 	glDeleteBuffers(1, &abo);
 	glDeleteBuffers(1, &ebo);
+
+	auto timer2{ std::chrono::high_resolution_clock::now() };
+	char title[512] = "";
+	_itoa_s((timer2 - timer1).count(), title, 10);
+	timer1 = timer2;
+	glutSetWindowTitle(title);
+	
 	return true;
 }

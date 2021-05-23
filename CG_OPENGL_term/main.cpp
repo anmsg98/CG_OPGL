@@ -15,7 +15,7 @@ constexpr int IM{ 9 };
 constexpr int main_timer{ 0 };
 constexpr int monsternum_by_col{ 3 };
 
-int monsternum{ static_cast<int>(COLOR_::count)*monsternum_by_col };
+int monsternum{ static_cast<int>(COLOR_::count) * monsternum_by_col };
 /*Funcs*/
 GLvoid drawScene(GLvoid);
 /**/
@@ -38,7 +38,7 @@ GLvoid SetSound();
 struct bullet_ {
 	Obj obj;
 	glm::vec3 dir;
-	unsigned int life{ 100 }; 
+	unsigned int life{ 100 };
 };
 struct monster_ {
 	Obj obj;
@@ -196,6 +196,7 @@ int main(int argc, char** argv) {
 	glutMouseWheelFunc(MouseWheel);
 
 	/* set timer */
+	
 	glutTimerFunc(1200 / FPS, Timer, main_timer);
 
 	/* setting */
@@ -230,13 +231,13 @@ GLvoid DefaultObj() {
 	/*world*/
 	LoadObj("sphere.obj", world, "8/8/8");
 	LoadTexture(world, "skydome.jpg", 2048, 1024, 3);
-	world.M.push_back(glm::scale(df, screen.size_of_world*2000.0f));
+	world.M.push_back(glm::scale(df, screen.size_of_world * 2000.0f));
 	world.Reverse_nor();
 
 	/*light*/
 	LoadObj("sphere.obj", sun.obj, "8/8/8");
 	sun.obj.Set_Color({ 10.0, 5.0, 5.0, 1.0 });
-	sun.pos = { groundsize*3.0f, 0.0, 0.0 };
+	sun.pos = { groundsize * 3.0f, 0.0, 0.0 };
 	sun.col = { 100.0,100.0,100.0 };
 	sun.obj.M.resize(2, df);
 	sun.obj.M.push_back(glm::scale(df, glm::vec3(80.0f)));
@@ -245,7 +246,7 @@ GLvoid DefaultObj() {
 
 	LoadObj("sphere.obj", moon.obj, "8/8/8");
 	moon.obj.Set_Color({ 1.0, 1.0, 10.0, 1.0 });
-	moon.pos = { groundsize*-3.0f, 0.0, 0.0 };
+	moon.pos = { groundsize * -3.0f, 0.0, 0.0 };
 	moon.col = { 0.5,0.5,100.0 };
 	moon.obj.M.resize(2, df);
 	moon.obj.M.push_back(glm::scale(df, glm::vec3(40.0f)));
@@ -278,7 +279,7 @@ GLvoid MakeShape() {
 		for (int i = 0; i < cloudnum; i++) {
 			cloud[0][i] = tempcloud;
 			cloud[0][i].M.at(1) = glm::rotate(df, glm::radians(GLfloat(rand() % 360)), { 0.0,1.0,0.0 });
-			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand()%4000)+1000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
+			cloud[0][i].M.at(0) = glm::translate(df, { GLfloat(rand() % (int(groundsize) * 2)) - groundsize,ground_floor + GLfloat(rand() % 4000) + 1000.0f,GLfloat(rand() % int(groundsize) * 2) - groundsize });
 		}
 	}
 	{
@@ -331,7 +332,7 @@ GLvoid MakeIM() {
 		^	4 0 5
 		z	6 7 8
 			x >
-	
+
 	*/
 	constexpr GLfloat size{ groundsize * 2.0f };
 	glm::mat4 tr[IM]{
@@ -393,7 +394,7 @@ bool cull_this_in_proj(Obj& obj, glm::mat4& PV) {
 	glm::vec4 gl_pos = PV * obj.world_M() * glm::vec4(pivot, 1.0f);
 	gl_pos = gl_pos / gl_pos.w;
 	if (1.0f < abs(gl_pos.x))return true;
-	else if (1.0f < abs(gl_pos.y))return true;	
+	else if (1.0f < abs(gl_pos.y))return true;
 	else if (1.0f < gl_pos.z)return true;
 	else return false;
 }
@@ -444,7 +445,7 @@ GLvoid drawScene() {
 			}
 		}
 		for (int im = 0; im < IM; im++) {
-			for (std::vector<monster_>::iterator i{ monster[im].begin() }, e{ monster[im].end() }; i != e;i++) {
+			for (std::vector<monster_>::iterator i{ monster[im].begin() }, e{ monster[im].end() }; i != e; i++) {
 				drawObj(i->obj);
 			}
 		}
@@ -455,7 +456,7 @@ GLvoid drawScene() {
 	}
 	/*alpha*/
 	/*투명 ALpha_objs 로 push 하면 정렬한 후 드로우 함*/
-	{	
+	{
 		for (int im = 0; im < IM; im++) {
 			for (int i = 0; i < cloudnum; i++) {
 				drawObj(cloud[im][i]);
@@ -475,7 +476,7 @@ GLvoid drawScene() {
 	/*그리기 끝*/
 	Sort_Alpha_blending(Alpha_objs);
 	Draw_Alpha_blending(Alpha_objs);
-	
+
 	glutSwapBuffers();
 }
 
@@ -487,6 +488,7 @@ bool up, down, left, right, L_drag, R_drag, view_SM;
 GLvoid Timer(int value) {
 	constexpr GLfloat degree{ 5.0f };
 	static GLfloat day__{ 0.0f }, night__{ 0.0f };
+
 	switch (value)
 	{
 	case  main_timer: {
@@ -601,7 +603,7 @@ GLvoid Timer(int value) {
 					for (std::vector<monster_>::iterator i{ monster[0].begin() }, e{ monster[0].end() }; i != e; i++) {
 						glm::mat4 M{ i->obj.world_M() };
 						if (plane.check_coll(M * a, M * b)) {
-						
+
 							if (plane.color_type == i->color_type) {
 								sound_item->play();
 								//std::cout << "sound_item-play\n";
@@ -774,7 +776,7 @@ GLvoid Timer(int value) {
 				}
 			}
 		}
-		/* sound */ 
+		/* sound */
 		{
 			day->setVolume(glm::sin(glm::radians(day__)));
 			day->Update();
@@ -847,7 +849,7 @@ GLvoid MouseWheel(int button, int dir, int x, int y) {
 	{
 		if (R_drag) {
 			plane.head_light.spot_theta += dd;
-			if (4.25f<plane.head_light.spot_theta ) { plane.head_light.spot_theta = 4.25f; }
+			if (4.25f < plane.head_light.spot_theta) { plane.head_light.spot_theta = 4.25f; }
 		}
 		else {
 			plane.view_dist_add(-10.0f);
@@ -857,7 +859,7 @@ GLvoid MouseWheel(int button, int dir, int x, int y) {
 	{
 		if (R_drag) {
 			plane.head_light.spot_theta -= dd;
-			if (plane.head_light.spot_theta<1.0f) { plane.head_light.spot_theta = 1.0f; }
+			if (plane.head_light.spot_theta < 1.0f) { plane.head_light.spot_theta = 1.0f; }
 		}
 		else {
 			plane.view_dist_add(10.0f);
@@ -996,7 +998,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 	case '5': {
 		P_PU = true;
 		break;
-	}	
+	}
 	case 'Z':
 	case 'z': {
 		timeStop = timeStop ? false : true;
